@@ -1,99 +1,109 @@
-//// Tests for the config snippet in docs/guides/deployment.md.
+//// Tests for the config snippet in Dream's deployment guide
+//// (docs/guides/deployment.md in the dream repository).
 ////
-//// Each test sets the environment variables it needs, runs load, and
-//// removes the variables again.
+//// Each test sets the environment variables it needs. `after_each` unsets
+//// them.
 
+import dream_test/matchers.{be_equal, or_fail_with, should}
+import dream_test/types.{type TestSuite}
+import dream_test/unit.{after_each, describe, it}
 import envoy
-import gleeunit/should
 import snippets/deployment_guide_config.{Config}
 
-fn set_environment(port: Result(String, Nil)) -> Nil {
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.set("SECRET_KEY", "example-secret-key")
-  case port {
-    Ok(value) -> envoy.set("PORT", value)
-    Error(Nil) -> envoy.unset("PORT")
-  }
-}
+pub fn tests() -> TestSuite(Nil) {
+  describe("deployment_guide_config.load", [
+    after_each(fn() {
+      envoy.unset("DATABASE_URL")
+      envoy.unset("SECRET_KEY")
+      envoy.unset("PORT")
+      Ok(Nil)
+    }),
+    it("returns the config when every variable is set", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://localhost/app")
+      envoy.set("SECRET_KEY", "example-secret-key")
+      envoy.set("PORT", "8080")
 
-fn clear_environment() -> Nil {
-  envoy.unset("DATABASE_URL")
-  envoy.unset("SECRET_KEY")
-  envoy.unset("PORT")
-}
+      // Act
+      let result = deployment_guide_config.load()
 
-pub fn load_with_all_variables_returns_config_test() {
-  // Arrange
-  set_environment(Ok("8080"))
+      // Assert
+      result
+      |> should
+      |> be_equal(
+        Ok(Config(
+          database_url: "postgres://localhost/app",
+          port: 8080,
+          secret_key: "example-secret-key",
+        )),
+      )
+      |> or_fail_with("load should read every value")
+    }),
+    it("uses port 3000 when PORT is not set", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://localhost/app")
+      envoy.set("SECRET_KEY", "example-secret-key")
+      envoy.unset("PORT")
 
-  // Act
-  let result = deployment_guide_config.load()
-  clear_environment()
+      // Act
+      let result = deployment_guide_config.load()
 
-  // Assert
-  result
-  |> should.equal(
-    Ok(Config(
-      database_url: "postgres://localhost/app",
-      port: 8080,
-      secret_key: "example-secret-key",
-    )),
-  )
-}
+      // Assert
+      result
+      |> should
+      |> be_equal(
+        Ok(Config(
+          database_url: "postgres://localhost/app",
+          port: 3000,
+          secret_key: "example-secret-key",
+        )),
+      )
+      |> or_fail_with("load should use port 3000")
+    }),
+    it("returns an error when PORT is not a number", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://localhost/app")
+      envoy.set("SECRET_KEY", "example-secret-key")
+      envoy.set("PORT", "eighty")
 
-pub fn load_without_port_uses_port_3000_test() {
-  // Arrange
-  set_environment(Error(Nil))
+      // Act
+      let result = deployment_guide_config.load()
 
-  // Act
-  let result = deployment_guide_config.load()
-  clear_environment()
+      // Assert
+      result
+      |> should
+      |> be_equal(Error("PORT must be a number, got: eighty"))
+      |> or_fail_with("load should reject PORT=eighty")
+    }),
+    it("returns an error when DATABASE_URL is not set", fn() {
+      // Arrange
+      envoy.unset("DATABASE_URL")
+      envoy.set("SECRET_KEY", "example-secret-key")
+      envoy.set("PORT", "8080")
 
-  // Assert
-  result
-  |> should.equal(
-    Ok(Config(
-      database_url: "postgres://localhost/app",
-      port: 3000,
-      secret_key: "example-secret-key",
-    )),
-  )
-}
+      // Act
+      let result = deployment_guide_config.load()
 
-pub fn load_with_a_port_that_is_not_a_number_returns_error_test() {
-  // Arrange
-  set_environment(Ok("eighty"))
+      // Assert
+      result
+      |> should
+      |> be_equal(Error("DATABASE_URL not set"))
+      |> or_fail_with("load should name DATABASE_URL")
+    }),
+    it("returns an error when SECRET_KEY is not set", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://localhost/app")
+      envoy.unset("SECRET_KEY")
+      envoy.set("PORT", "8080")
 
-  // Act
-  let result = deployment_guide_config.load()
-  clear_environment()
+      // Act
+      let result = deployment_guide_config.load()
 
-  // Assert
-  result |> should.equal(Error("PORT must be a number, got: eighty"))
-}
-
-pub fn load_without_database_url_returns_error_test() {
-  // Arrange
-  set_environment(Ok("8080"))
-  envoy.unset("DATABASE_URL")
-
-  // Act
-  let result = deployment_guide_config.load()
-  clear_environment()
-
-  // Assert
-  result |> should.equal(Error("DATABASE_URL not set"))
-}
-
-pub fn load_without_secret_key_returns_error_test() {
-  // Arrange
-  set_environment(Ok("8080"))
-  envoy.unset("SECRET_KEY")
-
-  // Act
-  let result = deployment_guide_config.load()
-  clear_environment()
-
-  // Assert
-  result |> should.equal(Error("SECRET_KEY not set"))
+      // Assert
+      result
+      |> should
+      |> be_equal(Error("SECRET_KEY not set"))
+      |> or_fail_with("load should name SECRET_KEY")
+    }),
+  ])
 }
