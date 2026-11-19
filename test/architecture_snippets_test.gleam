@@ -1,52 +1,66 @@
-//// Tests for the dream_config snippet in docs/reference/architecture.md.
+//// Tests for the dream_config snippet in Dream's architecture reference
+//// (docs/reference/architecture.md in the dream repository).
 ////
-//// Each test sets DATABASE_URL and PORT itself and unsets them at the end.
+//// Each test sets the environment variables it needs. `after_each` unsets
+//// them.
 
+import dream_test/matchers.{be_equal, or_fail_with, should}
+import dream_test/types.{type TestSuite}
+import dream_test/unit.{after_each, describe, it}
 import envoy
-import gleeunit/should
 import snippets/architecture_config.{AppConfig}
 
-pub fn load_config_reads_database_url_and_port_test() {
-  // Arrange
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.set("PORT", "8080")
+pub fn tests() -> TestSuite(Nil) {
+  describe("architecture_config.load_config", [
+    after_each(fn() {
+      envoy.unset("DATABASE_URL")
+      envoy.unset("PORT")
+      Ok(Nil)
+    }),
+    it("reads DATABASE_URL and PORT", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://localhost/app")
+      envoy.set("PORT", "8080")
 
-  // Act
-  let result = architecture_config.load_config()
-  envoy.unset("DATABASE_URL")
-  envoy.unset("PORT")
+      // Act
+      let result = architecture_config.load_config()
 
-  // Assert
-  result
-  |> should.equal(
-    Ok(AppConfig(database_url: "postgres://localhost/app", port: 8080)),
-  )
-}
+      // Assert
+      result
+      |> should
+      |> be_equal(
+        Ok(AppConfig(database_url: "postgres://localhost/app", port: 8080)),
+      )
+      |> or_fail_with("load_config should read both values")
+    }),
+    it("uses port 3000 when PORT is not set", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://localhost/app")
+      envoy.unset("PORT")
 
-pub fn load_config_uses_port_3000_when_port_is_not_set_test() {
-  // Arrange
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.unset("PORT")
+      // Act
+      let result = architecture_config.load_config()
 
-  // Act
-  let result = architecture_config.load_config()
-  envoy.unset("DATABASE_URL")
+      // Assert
+      result
+      |> should
+      |> be_equal(
+        Ok(AppConfig(database_url: "postgres://localhost/app", port: 3000)),
+      )
+      |> or_fail_with("load_config should use port 3000")
+    }),
+    it("returns an error when DATABASE_URL is not set", fn() {
+      // Arrange
+      envoy.unset("DATABASE_URL")
 
-  // Assert
-  result
-  |> should.equal(
-    Ok(AppConfig(database_url: "postgres://localhost/app", port: 3000)),
-  )
-}
+      // Act
+      let result = architecture_config.load_config()
 
-pub fn load_config_without_database_url_returns_error_test() {
-  // Arrange
-  envoy.unset("DATABASE_URL")
-
-  // Act
-  let result = architecture_config.load_config()
-
-  // Assert
-  result
-  |> should.equal(Error("Required environment variable not set: DATABASE_URL"))
+      // Assert
+      result
+      |> should
+      |> be_equal(Error("Required environment variable not set: DATABASE_URL"))
+      |> or_fail_with("load_config should name DATABASE_URL")
+    }),
+  ])
 }

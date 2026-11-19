@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `1`.
 
 ### Changed
+- Moved to its own repository
 - `dream_config` no longer depends on `dot_env`. It reads `.env` files with
   its own reader.
 - Each code example in the `dream_config/loader` doc comments is now a

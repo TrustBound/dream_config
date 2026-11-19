@@ -1,14 +1,36 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/TrustBound/dream/main/ricky_and_lucy.png" alt="Dream Logo" width="200">
-  
+  <img src="https://raw.githubusercontent.com/TrustBound/dream/main/ricky_and_lucy.png" alt="Ricky Moony and Lucy, a moon shaped mascot for Dream with the star shaped mascot for Gleam, each with cute cartoon eyes and a smile" width="200">
+
+<b>Type-safe configuration management for Gleam applications</b>
+
+</div>
+
+<br />
+
+<div align="center">
+  <a href="https://hex.pm/packages/dream_config">
+    <img src="https://img.shields.io/hexpm/v/dream_config" alt="Hex Package">
+  </a>
+  <a href="https://github.com/TrustBound/dream_config/releases">
+    <img src="https://img.shields.io/github/v/release/TrustBound/dream_config?label=Release" alt="Latest Release">
+  </a>
   <a href="https://hexdocs.pm/dream_config">
     <img src="https://img.shields.io/badge/hex-docs-lightgreen.svg" alt="HexDocs">
   </a>
+  <a href="https://github.com/TrustBound/dream_config/actions/workflows/ci.yml?query=branch%3Amain">
+    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/TrustBound/dream_config/badges/coverage.json" alt="Coverage">
+  </a>
+  <a href="https://github.com/TrustBound/dream_config/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
+  </a>
+  <a href="https://gleam.run">
+    <img src="https://img.shields.io/badge/gleam-%E2%9C%A8-ffaff3" alt="Gleam">
+  </a>
 </div>
 
-# dream_config
+<br />
 
-**Type-safe configuration management for Gleam applications.**
+## What is dream_config?
 
 A standalone module for loading configuration from environment variables and `.env` files. Built with the same quality standards as [Dream](https://github.com/TrustBound/dream), but completely independent—use it in any Gleam project.
 
@@ -26,7 +48,7 @@ A standalone module for loading configuration from environment variables and `.e
 gleam add dream_config
 ```
 
-## Quick Start <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+## Quick Start <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
@@ -62,7 +84,7 @@ Both return `Error(String)` with the path and the reason when the file cannot be
 
 The format is `NAME=VALUE`, one variable on each line. Lines that start with `#` are comments, and values can be in double quotes, single quotes or backticks. Names are changed to upper case.
 
-#### Load two files <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_load_env_files.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+#### Load two files <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_load_env_files.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
@@ -81,7 +103,7 @@ pub fn load_env_files(env_file_path: String) -> Result(Nil, String) {
 
 Use `get_required*` functions for values your application cannot run without:
 
-#### Load required settings <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_required_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+#### Load required settings <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_required_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
@@ -103,7 +125,7 @@ pub fn load_config() -> Result(AppConfig, String) {
 
 Use `get*` functions for values with sensible defaults:
 
-#### Read optional settings <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_optional_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+#### Read optional settings <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_optional_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
@@ -129,7 +151,7 @@ The `get_bool()` function treats these as `True`, in any mix of upper and lower 
 
 Everything else (including unset, and values with spaces around them) is `False`:
 
-#### Pick a log level from DEBUG <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_boolean_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+#### Pick a log level from DEBUG <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_boolean_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
@@ -160,18 +182,24 @@ pub fn log_level() -> String {
 
 ## Design Principles
 
-This module follows the same quality standards as [Dream](https://github.com/TrustBound/dream):
-
-- **No nested cases** - Clear, flat control flow
-- **No anonymous functions** - Named functions for clarity
-- **Builder pattern** - Consistent, composable APIs
-- **Type safety** - `Result` types force error handling
-- **Quality testing** - Comprehensive test coverage
+dream_config follows Dream's [design principles](https://github.com/TrustBound/dream/blob/release/3.0.0/docs/reference/design-principles.md) and [contributing guide](https://github.com/TrustBound/dream/blob/release/3.0.0/docs/contributing/contributing.md).
 
 ## About Dream
 
 This module was originally built for the [Dream](https://github.com/TrustBound/dream) web toolkit, but it's completely standalone and can be used in any Gleam project. It follows Dream's design principles and will be maintained as part of the Dream ecosystem.
 
+## Contributing
+
+See the [Contributing Guide](https://github.com/TrustBound/dream_config/blob/main/CONTRIBUTING.md). The coding and testing standards are Dream's: see [Dream's contributing guide](https://github.com/TrustBound/dream/blob/release/3.0.0/docs/contributing/contributing.md).
+
+---
+
 ## License
 
-MIT License - see LICENSE file for details.
+MIT — see [LICENSE.md](https://github.com/TrustBound/dream_config/blob/main/LICENSE.md)
+
+---
+
+<div align="center">
+  <sub>Built in Gleam, on the BEAM, by the <a href="https://github.com/trustbound/dream">Dream Team</a> ❤️</sub>
+</div>

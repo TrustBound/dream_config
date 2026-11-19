@@ -6,7 +6,7 @@
 ////
 //// ## Quick Start
 ////
-//// ### Load settings at startup <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+//// ### Load settings at startup <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ////
 //// ```gleam
 //// import dream_config/loader as config
@@ -80,18 +80,22 @@ fn read_text_file(path: String) -> Result(String, ReadError)
 /// The file is optional, so that the same code runs where the environment
 /// variables are set directly (for example in production).
 ///
-/// Returns `Ok(Nil)` if:
-/// - The file does not exist (nothing is set)
-/// - The file exists and all its variables are set
+/// ## Returns
 ///
-/// Returns `Error(String)` with the path and the reason if the file exists but
-/// cannot be read (for example no permission, a directory, or not UTF-8), or if
-/// a line is not valid (the message gives the line number). On an error, no
-/// variable from the file is set.
+/// - `Ok(Nil)`: The file does not exist (nothing is set), or the file exists
+///   and all its variables are set
+/// - `Error(String)`: The file exists but cannot be read (for example no
+///   permission, a directory, or not UTF-8), or a line is not valid. The
+///   message gives the path and the reason, and the line number for a line
+///   that is not valid. On an error, no variable from the file is set.
+///
+/// ## See Also
+///
+/// - `load_dotenv_from`: load a `.env` file from another path
 ///
 /// ## Example
 ///
-/// ### Load the .env file at startup <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/doc_load_dotenv.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Load the .env file at startup <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/doc_load_dotenv.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
@@ -130,7 +134,7 @@ pub fn load_dotenv() -> Result(Nil, String) {
 ///
 /// ## Example
 ///
-/// ### Load a .env file from a path <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/doc_load_dotenv_from.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Load a .env file from a path <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/doc_load_dotenv_from.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
@@ -194,7 +198,7 @@ fn format_parse_error(path: String, error: ParseError) -> String {
 ///
 /// ## Example
 ///
-/// ### Read a required value <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/doc_get_required.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Read a required value <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/doc_get_required.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
@@ -230,7 +234,7 @@ pub fn get_required(name: String) -> Result(String, String) {
 ///
 /// ## Example
 ///
-/// ### Read an optional value <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/doc_get.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Read an optional value <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/doc_get.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
@@ -263,7 +267,7 @@ pub fn get(name: String) -> Result(String, Nil) {
 ///
 /// ## Example
 ///
-/// ### Read an optional integer with a default <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/doc_get_int.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Read an optional integer with a default <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/doc_get_int.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
@@ -300,7 +304,7 @@ pub fn get_int(name: String) -> Result(Int, Nil) {
 ///
 /// ## Example
 ///
-/// ### Read a required integer <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/doc_get_required_int.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Read a required integer <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/doc_get_required_int.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
@@ -344,7 +348,7 @@ pub fn get_required_int(name: String) -> Result(Int, String) {
 ///
 /// ## Example
 ///
-/// ### Pick a log level from DEBUG <a href="https://github.com/TrustBound/dream/blob/dream_config-1.1.0/modules/config/test/snippets/readme_boolean_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+/// ### Pick a log level from DEBUG <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_boolean_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 ///
 /// ```gleam
 /// import dream_config/loader as config
