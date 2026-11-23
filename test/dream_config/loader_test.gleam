@@ -7,7 +7,7 @@
 import dream_config/loader
 import dream_test/file
 import dream_test/matchers.{be_equal, or_fail_with, should}
-import dream_test/types.{type TestSuite}
+import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, group, it}
 import envoy
 import fixtures/test_file
@@ -24,7 +24,7 @@ const unreadable_path = "build/dream_config_unreadable_test.env"
 
 const default_path = ".env"
 
-pub fn tests() -> TestSuite(Nil) {
+pub fn tests() -> TestSuite {
   describe("dream_config/loader", [
     after_each(fn() {
       envoy.unset(variable)

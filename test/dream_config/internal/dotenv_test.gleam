@@ -2,10 +2,10 @@
 
 import dream_config/internal/dotenv.{ParseError, Variable}
 import dream_test/matchers.{be_equal, or_fail_with, should}
-import dream_test/types.{type TestSuite}
+import dream_test/suite.{type TestSuite}
 import dream_test/unit.{describe, group, it}
 
-pub fn tests() -> TestSuite(Nil) {
+pub fn tests() -> TestSuite {
   describe("dream_config/internal/dotenv", [
     group("parse", [
       it("reads name and value pairs", fn() {

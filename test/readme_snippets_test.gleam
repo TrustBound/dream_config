@@ -4,7 +4,7 @@
 //// every variable that a test can set.
 
 import dream_test/matchers.{be_equal, or_fail_with, should}
-import dream_test/types.{type TestSuite}
+import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, group, it}
 import envoy
 import gleam/option
@@ -15,7 +15,7 @@ import snippets/readme_optional_values
 import snippets/readme_quick_start.{Settings}
 import snippets/readme_required_values.{AppConfig}
 
-pub fn tests() -> TestSuite(Nil) {
+pub fn tests() -> TestSuite {
   describe("README snippets", [
     after_each(fn() {
       envoy.unset("DATABASE_URL")

@@ -4,7 +4,7 @@
 //// every variable that a test can set.
 
 import dream_test/matchers.{be_equal, or_fail_with, should}
-import dream_test/types.{type TestSuite}
+import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, group, it}
 import envoy
 import gleam/option
@@ -16,7 +16,7 @@ import snippets/doc_get_required_int
 import snippets/doc_load_dotenv
 import snippets/doc_load_dotenv_from
 
-pub fn tests() -> TestSuite(Nil) {
+pub fn tests() -> TestSuite {
   describe("doc comment snippets", [
     after_each(fn() {
       envoy.unset("DATABASE_URL")

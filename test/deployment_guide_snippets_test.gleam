@@ -5,12 +5,12 @@
 //// them.
 
 import dream_test/matchers.{be_equal, or_fail_with, should}
-import dream_test/types.{type TestSuite}
+import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
 import envoy
 import snippets/deployment_guide_config.{Config}
 
-pub fn tests() -> TestSuite(Nil) {
+pub fn tests() -> TestSuite {
   describe("deployment_guide_config.load", [
     after_each(fn() {
       envoy.unset("DATABASE_URL")
