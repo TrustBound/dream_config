@@ -11,6 +11,7 @@ import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
 import envoy
+import fixtures/output_file
 import fixtures/test_file
 import gleam/result
 import snippets/doc_load_dotenv
@@ -57,55 +58,65 @@ pub fn tests() -> TestSuite {
     it("step 2: database_url_at_startup reads the .env file", fn() {
       // Arrange
       use _ <- result.try(copy_file(development_path, ".env"))
+      use shown <- result.try(output_file.read(
+        "guide_env_files_step_2_file_value",
+      ))
 
       // Act
       let url = doc_load_dotenv.database_url_at_startup()
 
       // Assert
-      url
+      output_file.inspected(url)
       |> should
-      |> be_equal(Ok("postgres://localhost:5432/myapp_dev"))
+      |> be_equal(shown)
       |> or_fail_with("The value should come from the .env file")
     }),
     it("step 2: with no .env file the value comes from the environment", fn() {
       // Arrange
       envoy.set("DATABASE_URL", "postgres://db.internal:5432/myapp")
+      use shown <- result.try(output_file.read("guide_env_files_step_2_no_file"))
 
       // Act
       let url = doc_load_dotenv.database_url_at_startup()
 
       // Assert
-      url
+      output_file.inspected(url)
       |> should
-      |> be_equal(Ok("postgres://db.internal:5432/myapp"))
+      |> be_equal(shown)
       |> or_fail_with("A missing .env file is not an error")
     }),
     it("step 2: a variable that is set wins over the .env file", fn() {
       // Arrange
       envoy.set("DATABASE_URL", "postgres://db.internal:5432/myapp")
       use _ <- result.try(copy_file(development_path, ".env"))
+      use shown <- result.try(output_file.read(
+        "guide_env_files_step_2_environment_wins",
+      ))
 
       // Act
       let result = doc_load_dotenv.database_url_at_startup()
 
       // Assert
-      result
+      output_file.inspected(result)
       |> should
-      |> be_equal(Ok("postgres://db.internal:5432/myapp"))
+      |> be_equal(shown)
       |> or_fail_with("The environment should win over the .env file")
     }),
     it("step 3: database_url_from_file lets the .env file win", fn() {
       // Arrange
       envoy.set("DATABASE_URL", "postgres://db.internal:5432/myapp")
       use _ <- result.try(copy_file(development_path, ".env"))
+      use shown <- result.try(output_file.read(
+        "guide_env_files_step_3_file_wins",
+      ))
 
       // Act
       let result = doc_load_dotenv_override.database_url_from_file()
 
       // Assert
-      result
+      output_file.inspected(result)
       |> should
-      |> be_equal(Ok("postgres://localhost:5432/myapp_dev"))
+      |> be_equal(shown)
       |> or_fail_with("The .env file should win with load_dotenv_override")
     }),
     it("step 4: load_env_files sets the variables of the secrets file", fn() {

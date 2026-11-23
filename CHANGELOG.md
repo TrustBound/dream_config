@@ -113,7 +113,7 @@ Version 1.1.0 was never released. Its changes are part of 2.0.0.
 
 ### Testing
 
-- 218 tests run, 0 failed, 100% line coverage (137 of 137 lines), in about 1 second of test time and 2.6 seconds of wall time for `make test` (tests run one at a time), measured two times on an Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2, with a load average of about 4
+- 218 tests run, 0 failed, 100% line coverage (137 of 137 lines), in about 1 second of test time and 2.6 seconds of wall time for `make test` (tests run one at a time), measured two times on an Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2, with a load average of about 6
 
 ## [1.0.2] - 2025-11-21
 

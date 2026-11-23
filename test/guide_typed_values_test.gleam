@@ -7,6 +7,7 @@ import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
 import envoy
+import fixtures/output_file
 import gleam/option
 import gleam/result
 import snippets/doc_get
@@ -25,32 +26,41 @@ pub fn tests() -> TestSuite {
     it("step 1: port rejects a PORT that is not a number", fn() {
       // Arrange
       envoy.set("PORT", "eighty")
+      use shown <- result.try(output_file.read(
+        "guide_typed_values_step_1_not_an_integer",
+      ))
 
       // Act
       let result = guide_typed_values_port.port()
 
       // Assert
-      result
+      output_file.inspected(result)
       |> should
-      |> be_equal(Error(NotAnInteger("PORT", "eighty")))
+      |> be_equal(shown)
       |> or_fail_with("port should stop on eighty")
     }),
     it("step 1: port rejects an empty PORT", fn() {
       // Arrange
       envoy.set("PORT", "")
+      use shown <- result.try(output_file.read(
+        "guide_typed_values_step_1_empty",
+      ))
 
       // Act
       let result = guide_typed_values_port.port()
 
       // Assert
-      result
+      output_file.inspected(result)
       |> should
-      |> be_equal(Error(NotAnInteger("PORT", "")))
+      |> be_equal(shown)
       |> or_fail_with("port should stop on an empty value")
     }),
     it("step 1: describe gives the text for a PORT that is not a number", fn() {
       // Arrange
       envoy.set("PORT", "eighty")
+      use shown <- result.try(output_file.read(
+        "guide_typed_values_step_1_describe",
+      ))
 
       // Act
       let result =
@@ -58,8 +68,9 @@ pub fn tests() -> TestSuite {
 
       // Assert
       result
+      |> result.map_error(fn(text) { text <> "\n" })
       |> should
-      |> be_equal(Error("Environment variable PORT must be an integer"))
+      |> be_equal(Error(shown))
       |> or_fail_with("describe should name PORT")
     }),
     it("step 1: result.unwrap hides a PORT that is not a number", fn() {

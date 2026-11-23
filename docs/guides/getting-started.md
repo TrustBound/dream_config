@@ -36,10 +36,12 @@ dream_config has no dependency on Dream or on any framework, so you can use it i
 
 All the functions are in one module, `dream_config/loader`. The examples import it as `config`.
 
-To run an example, set the variables in the shell where you start it, for example:
+To run an example, set the variables in the shell where you start it. In your project, that is `DATABASE_URL=postgres://localhost/app PORT=8080 gleam run`. In a clone of this repository, this command runs the program of [Step 3](#step-3-load-the-env-file-and-the-settings-once-in-main), and CI runs it too:
+
+### Run the program of Step 3 <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/scripts/check.sh#L12"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```sh
-DATABASE_URL=postgres://localhost/app PORT=8080 gleam run
+DATABASE_URL=postgres://localhost/app PORT=8080 gleam run -m snippets/guide_getting_started_main
 ```
 
 ## Step 1: Read the required settings
@@ -70,11 +72,15 @@ All the read functions return the same error type, `ConfigError`, so they chain 
 
 With `DATABASE_URL=postgres://localhost/app` and `PORT=8080`, `load_config()` returns:
 
+### The settings that load <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_1_loaded.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
-Ok(AppConfig(database_url: "postgres://localhost/app", port: 8080))
+Ok(AppConfig("postgres://localhost/app", 8080))
 ```
 
 When `DATABASE_URL` is not set, it returns:
+
+### A required setting that is not set <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_1_not_set.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Error(NotSet("DATABASE_URL"))
@@ -82,11 +88,15 @@ Error(NotSet("DATABASE_URL"))
 
 When `DATABASE_URL` is set to an empty string, for example by a `DATABASE_URL=` line, it returns:
 
+### A required setting that is empty <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_1_empty.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Error(Empty("DATABASE_URL"))
 ```
 
 When `PORT` is `eighty`, it returns the name and the value:
+
+### A port that is not an integer <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_1_not_an_integer.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Error(NotAnInteger("PORT", "eighty"))
@@ -128,11 +138,15 @@ Two new functions read the optional settings:
 
 With `DATABASE_URL=postgres://localhost/app`, `PORT=8080`, `DEBUG=true` and no `API_KEY`, `load_settings()` returns:
 
+### The settings with defaults <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_2_loaded.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
-Ok(Settings(database_url: "postgres://localhost/app", port: 8080, debug_mode: True, api_key: "default-key"))
+Ok(Settings("postgres://localhost/app", 8080, True, "default-key"))
 ```
 
 When `PORT` is not set, it returns:
+
+### A port that is not set <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_2_port_not_set.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Error(NotSet("PORT"))
@@ -192,17 +206,23 @@ Here is what each part does:
 
 With `DATABASE_URL=postgres://localhost/app` and `PORT=8080`, the program prints this and exits with status 0:
 
+### The program starts <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_3_environment.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Listening on port 8080
 ```
 
 With no variables set and a `.env` file that holds `DATABASE_URL=postgres://localhost/app` and `PORT=4000`, it prints:
 
+### The program starts with the .env file <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_3_env_file.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Listening on port 4000
 ```
 
 With the same file and `PORT=8080` set in the shell, the shell wins, and it prints:
+
+### The shell wins over the .env file <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_step_3_shell_wins.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Listening on port 8080
@@ -212,11 +232,15 @@ Listening on port 8080
 
 Each failure stops the program before it does any work, with one line that names the variable. When `DATABASE_URL` is not set, the program prints this and exits with status 1:
 
+### The program stops on a missing setting <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_missing_setting.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Cannot start: Required environment variable not set: DATABASE_URL
 ```
 
 When `DATABASE_URL` is set to an empty string, it prints this and exits with status 1:
+
+### The program stops on an empty setting <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_empty_setting.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Cannot start: Required environment variable is empty: DATABASE_URL
@@ -224,11 +248,15 @@ Cannot start: Required environment variable is empty: DATABASE_URL
 
 When `PORT` is set to `eighty`, it prints this and exits with status 1:
 
+### The program stops on a wrong setting <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_wrong_setting.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Cannot start: Environment variable PORT must be an integer
 ```
 
 When the `.env` file has a line that is not valid, for example `DATABASE_URL` with no `=`, it prints the path and the line number, and exits with status 1:
+
+### The program stops on a bad .env line <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_getting_started_bad_env_line.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Cannot start: Cannot load .env file at .env: line 1: expected NAME=VALUE

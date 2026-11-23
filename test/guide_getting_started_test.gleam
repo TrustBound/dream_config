@@ -10,6 +10,7 @@ import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
 import envoy
 import fixtures/child_process
+import fixtures/output_file
 import fixtures/test_file
 import gleam/result
 import snippets/guide_getting_started_main
@@ -43,6 +44,9 @@ pub fn tests() -> TestSuite {
       // Arrange
       envoy.set("DATABASE_URL", "postgres://localhost/app")
       envoy.set("PORT", "8080")
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_step_3_environment",
+      ))
 
       // Act
       let ran = child_process.run_main(main_module)
@@ -50,12 +54,15 @@ pub fn tests() -> TestSuite {
       // Assert
       ran
       |> should
-      |> be_equal(#(0, "Listening on port 8080\n"))
+      |> be_equal(#(0, shown))
       |> or_fail_with("main should print the message and return")
     }),
     it("step 3: main names a missing setting and exits with status 1", fn() {
       // Arrange
       envoy.set("PORT", "8080")
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_missing_setting",
+      ))
 
       // Act
       let ran = child_process.run_main(main_module)
@@ -63,16 +70,16 @@ pub fn tests() -> TestSuite {
       // Assert
       ran
       |> should
-      |> be_equal(#(
-        1,
-        "Cannot start: Required environment variable not set: DATABASE_URL\n",
-      ))
+      |> be_equal(#(1, shown))
       |> or_fail_with("main should stop with the reason")
     }),
     it("step 3: main names a wrong setting and exits with status 1", fn() {
       // Arrange
       envoy.set("DATABASE_URL", "postgres://localhost/app")
       envoy.set("PORT", "eighty")
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_wrong_setting",
+      ))
 
       // Act
       let ran = child_process.run_main(main_module)
@@ -80,16 +87,16 @@ pub fn tests() -> TestSuite {
       // Assert
       ran
       |> should
-      |> be_equal(#(
-        1,
-        "Cannot start: Environment variable PORT must be an integer\n",
-      ))
+      |> be_equal(#(1, shown))
       |> or_fail_with("main should stop with the reason")
     }),
     it("step 3: main names an empty setting and exits with status 1", fn() {
       // Arrange
       envoy.set("DATABASE_URL", "")
       envoy.set("PORT", "8080")
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_empty_setting",
+      ))
 
       // Act
       let result = child_process.run_main(main_module)
@@ -97,10 +104,7 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(#(
-        1,
-        "Cannot start: Required environment variable is empty: DATABASE_URL\n",
-      ))
+      |> be_equal(#(1, shown))
       |> or_fail_with("main should stop with the reason")
     }),
     it("step 3: main names a bad .env line and exits with status 1", fn() {
@@ -109,6 +113,9 @@ pub fn tests() -> TestSuite {
         file.write(".env", "DATABASE_URL\n")
         |> result.map_error(file.error_to_string),
       )
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_bad_env_line",
+      ))
 
       // Act
       let result = child_process.run_main(main_module)
@@ -116,10 +123,7 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(#(
-        1,
-        "Cannot start: Cannot load .env file at .env: line 1: expected NAME=VALUE\n",
-      ))
+      |> be_equal(#(1, shown))
       |> or_fail_with("main should stop with the reason")
     }),
     it("step 3: main reads the .env file", fn() {
@@ -128,6 +132,9 @@ pub fn tests() -> TestSuite {
         file.write(".env", "DATABASE_URL=postgres://localhost/app\nPORT=4000\n")
         |> result.map_error(file.error_to_string),
       )
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_step_3_env_file",
+      ))
 
       // Act
       let result = child_process.run_main(main_module)
@@ -135,7 +142,7 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(#(0, "Listening on port 4000\n"))
+      |> be_equal(#(0, shown))
       |> or_fail_with("main should read the .env file")
     }),
     it("step 3: a PORT that is set wins over the .env file", fn() {
@@ -145,6 +152,9 @@ pub fn tests() -> TestSuite {
         file.write(".env", "DATABASE_URL=postgres://localhost/app\nPORT=4000\n")
         |> result.map_error(file.error_to_string),
       )
+      use shown <- result.try(output_file.read(
+        "guide_getting_started_step_3_shell_wins",
+      ))
 
       // Act
       let result = child_process.run_main(main_module)
@@ -152,7 +162,7 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(#(0, "Listening on port 8080\n"))
+      |> be_equal(#(0, shown))
       |> or_fail_with("the environment should win")
     }),
   ])

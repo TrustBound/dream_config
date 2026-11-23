@@ -57,17 +57,23 @@ pub fn port() -> Result(Int, ConfigError) {
 
 `get_int("PORT")` returns `Error(NotSet("PORT"))` when the variable is not set, and `port()` returns `Ok(3000)`. With `PORT=8080`, it returns `Ok(8080)`. With `PORT=eighty`, `get_int` returns a different error, and `port()` passes it on:
 
+### A port that is not an integer <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_typed_values_step_1_not_an_integer.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Error(NotAnInteger("PORT", "eighty"))
 ```
 
 An empty value is not an integer either. With `PORT` set to an empty string, `port()` returns:
 
+### An empty port <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_typed_values_step_1_empty.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Error(NotAnInteger("PORT", ""))
 ```
 
 The result is a `Result(Int, ConfigError)`, the same type as the required reads, so `port()` fits into the `result.try` chain of your settings loader. When the app stops, `config.describe` gives the text for the error. For `PORT=eighty`, that is:
+
+### The text for a port that is not an integer <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_typed_values_step_1_describe.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Environment variable PORT must be an integer

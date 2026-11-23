@@ -43,7 +43,9 @@ The examples import `dream_config/loader` as `config`. If you have not read sett
 
 Make a file named `.env` in the root of your project, next to `gleam.toml`:
 
-```sh
+### A .env file for local development <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/fixtures/guide_development.env"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
+```dotenv
 # Settings for local development. Keep this file out of git.
 DATABASE_URL=postgres://localhost:5432/myapp_dev
 PORT=8080
@@ -52,11 +54,7 @@ DEBUG=true
 
 Each line is `NAME=VALUE`. A line that starts with `#` is a comment. The [file format](#the-file-format) section shows the rest of the rules.
 
-Then add `.env` to your `.gitignore`, because it often holds passwords and keys:
-
-```sh
-.env
-```
+Then add a line with `.env` to your `.gitignore`, because the file often holds passwords and keys.
 
 ## Step 2: Load it at startup
 
@@ -81,17 +79,23 @@ pub fn database_url_at_startup() -> Result(String, String) {
 
 With the file from Step 1 and no `DATABASE_URL` in the environment, `database_url_at_startup()` returns the value from the file:
 
+### The value from the .env file <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_env_files_step_2_file_value.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Ok("postgres://localhost:5432/myapp_dev")
 ```
 
 The same code runs in production. When there is no `.env` file, `load_dotenv()` returns `Ok(Nil)` and sets nothing. With `DATABASE_URL=postgres://db.internal:5432/myapp` set by the platform and no file, the function returns:
 
+### The value from the environment, with no file <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_env_files_step_2_no_file.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
 ```text
 Ok("postgres://db.internal:5432/myapp")
 ```
 
 When the variable is in the environment and in the file, the environment wins. With `DATABASE_URL=postgres://db.internal:5432/myapp` in the environment and the file from Step 1, the function returns the value from the environment:
+
+### The value from the environment, with a file <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_env_files_step_2_environment_wins.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Ok("postgres://db.internal:5432/myapp")
@@ -120,6 +124,8 @@ pub fn database_url_from_file() -> Result(String, String) {
 ```
 
 `load_dotenv_override()` reads the same file and sets every variable of it. A value in the file replaces a variable that is already set. With `DATABASE_URL=postgres://db.internal:5432/myapp` in the environment and the file from Step 1, `database_url_from_file()` returns the value from the file:
+
+### The value from the file that wins <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/outputs/guide_env_files_step_3_file_wins.txt"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```text
 Ok("postgres://localhost:5432/myapp_dev")
@@ -150,7 +156,9 @@ pub fn load_env_files(secrets_path: String) -> Result(Nil, LoadError) {
 
 With this secrets file:
 
-```sh
+### A secrets file <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/fixtures/guide_secrets.env"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
+```dotenv
 DATABASE_URL=postgres://db.internal:5432/myapp
 API_KEY=secret-from-the-platform
 ```
@@ -199,7 +207,9 @@ These lines are from a test file, and the value column is what `config.get(name)
 
 A value in double quotes, single quotes or backticks can also run over several lines. This value is `"first line\nsecond line"`:
 
-```sh
+### A value over two lines <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/fixtures/guide_format.env#L14-L15"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+
+```dotenv
 MULTILINE="first line
 second line"
 ```

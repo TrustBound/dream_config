@@ -1,0 +1,1 @@
+Ok(Settings("postgres://localhost/app", 8080, True, "default-key"))

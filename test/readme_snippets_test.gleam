@@ -4,14 +4,15 @@
 //// Each test sets the environment variables it needs. `after_each` unsets
 //// every variable that a test can set.
 
-import dream_config/loader.{Empty, NotAnInteger, NotSet}
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, group, it}
 import envoy
+import fixtures/output_file
+import gleam/result
 import snippets/readme_boolean_values
-import snippets/readme_quick_start.{Settings}
-import snippets/readme_required_values.{AppConfig}
+import snippets/readme_quick_start
+import snippets/readme_required_values
 
 pub fn tests() -> TestSuite {
   describe("README snippets", [
@@ -28,34 +29,33 @@ pub fn tests() -> TestSuite {
         envoy.set("DATABASE_URL", "postgres://localhost/app")
         envoy.set("PORT", "8080")
         envoy.set("DEBUG", "true")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_2_loaded",
+        ))
 
         // Act
         let result = readme_quick_start.load_settings()
 
         // Assert
-        result
+        output_file.inspected(result)
         |> should
-        |> be_equal(
-          Ok(Settings(
-            database_url: "postgres://localhost/app",
-            port: 8080,
-            debug_mode: True,
-            api_key: "default-key",
-          )),
-        )
+        |> be_equal(shown)
         |> or_fail_with("load_settings should read every value")
       }),
       it("returns NotSet when PORT is not set", fn() {
         // Arrange
         envoy.set("DATABASE_URL", "postgres://localhost/app")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_2_port_not_set",
+        ))
 
         // Act
         let result = readme_quick_start.load_settings()
 
         // Assert
-        result
+        output_file.inspected(result)
         |> should
-        |> be_equal(Error(NotSet("PORT")))
+        |> be_equal(shown)
         |> or_fail_with("load_settings should name PORT")
       }),
     ]),
@@ -64,57 +64,67 @@ pub fn tests() -> TestSuite {
         // Arrange
         envoy.set("DATABASE_URL", "postgres://localhost/app")
         envoy.set("PORT", "8080")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_loaded",
+        ))
 
         // Act
         let result = readme_required_values.load_config()
 
         // Assert
-        result
+        output_file.inspected(result)
         |> should
-        |> be_equal(
-          Ok(AppConfig(database_url: "postgres://localhost/app", port: 8080)),
-        )
+        |> be_equal(shown)
         |> or_fail_with("load_config should read both values")
       }),
       it("returns NotSet when DATABASE_URL is not set", fn() {
         // Arrange
         envoy.set("PORT", "8080")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_not_set",
+        ))
 
         // Act
         let result = readme_required_values.load_config()
 
         // Assert
-        result
+        output_file.inspected(result)
         |> should
-        |> be_equal(Error(NotSet("DATABASE_URL")))
+        |> be_equal(shown)
         |> or_fail_with("load_config should name DATABASE_URL")
       }),
       it("returns Empty when DATABASE_URL is empty", fn() {
         // Arrange
         envoy.set("DATABASE_URL", "")
         envoy.set("PORT", "8080")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_empty",
+        ))
 
         // Act
         let result = readme_required_values.load_config()
 
         // Assert
-        result
+        output_file.inspected(result)
         |> should
-        |> be_equal(Error(Empty("DATABASE_URL")))
+        |> be_equal(shown)
         |> or_fail_with("load_config should reject an empty DATABASE_URL")
       }),
       it("returns NotAnInteger when PORT is not an integer", fn() {
         // Arrange
         envoy.set("DATABASE_URL", "postgres://localhost/app")
         envoy.set("PORT", "eighty")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_not_an_integer",
+        ))
 
         // Act
         let result = readme_required_values.load_config()
 
         // Assert
-        result
+        output_file.inspected(result)
         |> should
-        |> be_equal(Error(NotAnInteger("PORT", "eighty")))
+        |> be_equal(shown)
         |> or_fail_with("load_config should reject eighty")
       }),
     ]),

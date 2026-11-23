@@ -118,7 +118,7 @@ A `.env` file saved as UTF-8 with a byte order mark (the bytes `EF BB BF`) kept 
 
 ## Testing
 
-- 218 tests run, 0 failed, 100% line coverage (137 of 137 lines), in about 1 second of test time and 2.6 seconds of wall time for `make test` (tests run one at a time), measured two times on an Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2, with a load average of about 4
+- 218 tests run, 0 failed, 100% line coverage (137 of 137 lines), in about 1 second of test time and 2.6 seconds of wall time for `make test` (tests run one at a time), measured two times on an Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2, with a load average of about 6
 
 ## Upgrading
 
