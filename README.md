@@ -8,31 +8,19 @@
 <br />
 
 <div align="center">
-  <a href="https://hex.pm/packages/dream_config">
-    <img src="https://img.shields.io/hexpm/v/dream_config" alt="Hex Package">
-  </a>
-  <a href="https://github.com/TrustBound/dream_config/releases">
-    <img src="https://img.shields.io/github/v/release/TrustBound/dream_config?label=Release" alt="Latest Release">
-  </a>
-  <a href="https://hexdocs.pm/dream_config">
-    <img src="https://img.shields.io/badge/hex-docs-lightgreen.svg" alt="HexDocs">
-  </a>
-  <a href="https://github.com/TrustBound/dream_config/actions/workflows/ci.yml?query=branch%3Amain">
-    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/TrustBound/dream_config/badges/coverage.json" alt="Coverage">
-  </a>
-  <a href="https://github.com/TrustBound/dream_config/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
-  </a>
-  <a href="https://gleam.run">
-    <img src="https://img.shields.io/badge/gleam-%E2%9C%A8-ffaff3" alt="Gleam">
-  </a>
+  <a href="https://hex.pm/packages/dream_config"><img src="https://img.shields.io/hexpm/v/dream_config" alt="Hex Package"></a>
+  <a href="https://github.com/TrustBound/dream_config/releases"><img src="https://img.shields.io/github/v/release/TrustBound/dream_config?label=Release" alt="Latest Release"></a>
+  <a href="https://hexdocs.pm/dream_config"><img src="https://img.shields.io/badge/hex-docs-lightgreen.svg" alt="HexDocs"></a>
+  <a href="https://github.com/TrustBound/dream_config/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/TrustBound/dream_config/badges/coverage.json" alt="Coverage"></a>
+  <a href="https://github.com/TrustBound/dream_config/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <a href="https://gleam.run"><img src="https://img.shields.io/badge/gleam-%E2%9C%A8-ffaff3" alt="Gleam"></a>
 </div>
 
 <br />
 
 ## What is dream_config?
 
-A standalone module for loading configuration from environment variables and `.env` files. Built with the same quality standards as [Dream](https://github.com/TrustBound/dream), but completely independent—use it in any Gleam project.
+A standalone module for loading configuration from environment variables and `.env` files. It is built with the same quality standards as [Dream](https://github.com/TrustBound/dream), but it is completely independent. Use it in any Gleam project.
 
 ## Features
 
@@ -48,7 +36,9 @@ A standalone module for loading configuration from environment variables and `.e
 gleam add dream_config
 ```
 
-## Quick Start <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+## Quick Start
+
+### Load settings at startup <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a> <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/docs/guides/getting-started.md#load-settings-at-startup-"><img align="right" alt="Guide" src="https://img.shields.io/badge/%F0%9F%93%96_read-guide-blue.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
@@ -74,111 +64,17 @@ pub fn load_settings() -> Result(Settings, String) {
 }
 ```
 
-## Usage
+## Guides
 
-### Loading `.env` Files
-
-`load_dotenv()` reads `.env` in the current directory. A missing `.env` file is not an error, so the same code runs where the variables are set directly. `load_dotenv_from(path)` reads the file at `path`, and a missing file is an error.
-
-Both return `Error(String)` with the path and the reason when the file cannot be read (for example no permission, a directory, or not UTF-8), or when a line is not valid. The message gives the line number, for example `Cannot load .env file at .env: line 2: expected NAME=VALUE`. On an error, no variable from the file is set.
-
-The format is `NAME=VALUE`, one variable on each line. Lines that start with `#` are comments, and values can be in double quotes, single quotes or backticks. Names are changed to upper case.
-
-#### Load two files <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_load_env_files.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
-
-```gleam
-import dream_config/loader as config
-import gleam/result
-
-pub fn load_env_files(env_file_path: String) -> Result(Nil, String) {
-  // Load from default location (current directory)
-  use _ <- result.try(config.load_dotenv())
-
-  // Load from specific path, for example "/etc/myapp/.env"
-  config.load_dotenv_from(env_file_path)
-}
-```
-
-### Required Values
-
-Use `get_required*` functions for values your application cannot run without:
-
-#### Load required settings <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_required_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
-
-```gleam
-import dream_config/loader as config
-import gleam/result
-
-pub type AppConfig {
-  AppConfig(database_url: String, port: Int)
-}
-
-pub fn load_config() -> Result(AppConfig, String) {
-  use database_url <- result.try(config.get_required("DATABASE_URL"))
-  use port <- result.try(config.get_required_int("PORT"))
-
-  Ok(AppConfig(database_url: database_url, port: port))
-}
-```
-
-### Optional Values
-
-Use `get*` functions for values with sensible defaults:
-
-#### Read optional settings <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_optional_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
-
-```gleam
-import dream_config/loader as config
-import gleam/option
-import gleam/result
-
-pub fn read_optional_values() -> #(option.Option(String), Int) {
-  let api_key = config.get("API_KEY") |> option.from_result
-
-  // Default to 3000
-  let port = config.get_int("PORT") |> result.unwrap(3000)
-
-  #(api_key, port)
-}
-```
-
-### Boolean Values
-
-The `get_bool()` function treats these as `True`, in any mix of upper and lower case (for example `TRUE`, `tRUE` or `Yes`):
-- `"true"`
-- `"1"`
-- `"yes"`
-
-Everything else (including unset, and values with spaces around them) is `False`:
-
-#### Pick a log level from DEBUG <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_boolean_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
-
-```gleam
-import dream_config/loader as config
-
-pub fn log_level() -> String {
-  let debug_mode = config.get_bool("DEBUG")
-  case debug_mode {
-    True -> "debug"
-    False -> "info"
-  }
-}
-```
+- [Getting started](https://github.com/TrustBound/dream_config/blob/main/docs/guides/getting-started.md): install the package and load settings at startup
+- [Load .env files](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md): load variables from a `.env` file, the file format, and the errors
+- [Required values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/required-values.md): read values the application cannot run without
+- [Optional values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/optional-values.md): read values that have defaults
+- [Boolean values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/boolean-values.md): read a variable as `True` or `False`
 
 ## API Reference
 
-### Loading `.env` Files
-
-- `load_dotenv() -> Result(Nil, String)` - Load from default location (a missing file is `Ok(Nil)`)
-- `load_dotenv_from(path: String) -> Result(Nil, String)` - Load from specific path (a missing file is an error)
-
-### Getting Values
-
-- `get_required(name: String) -> Result(String, String)` - Required string
-- `get(name: String) -> Result(String, Nil)` - Optional string
-- `get_required_int(name: String) -> Result(Int, String)` - Required integer
-- `get_int(name: String) -> Result(Int, Nil)` - Optional integer
-- `get_bool(name: String) -> Bool` - Boolean (defaults to `False`)
+The full API reference is on [HexDocs](https://hexdocs.pm/dream_config). Each guide lists the functions it uses.
 
 ## Design Principles
 

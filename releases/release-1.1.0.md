@@ -27,6 +27,10 @@ It is a minor version: no function changed its type. But two functions now retur
 
 Each code example in the `dream_config/loader` doc comments is now a tested snippet, and the examples are valid Gleam.
 
+### Guides
+
+The package has guides in [`docs/guides/`](https://github.com/TrustBound/dream_config/tree/main/docs/guides). The README is short and links to them, and HexDocs shows the guides.
+
 ## Bug Fixes
 
 ### `load_dotenv` and `load_dotenv_from` Return Their Errors
@@ -58,7 +62,7 @@ pub fn database_url_at_startup() -> Result(String, String) {
 
 ## Testing
 
-- 61 tests run, 0 failed, in about 0.4 seconds (Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.17.0)
+- 96 tests run, 0 failed, 100% line coverage (92 of 92 lines), in about 2 seconds of wall time (Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2)
 
 ## Upgrading
 
@@ -103,6 +107,11 @@ Text after a closing quote on the same line is now an error, unless it is a `#` 
 
 - [dream_config](https://hexdocs.pm/dream_config) - v1.1.0
 - [README](https://github.com/TrustBound/dream_config/blob/main/README.md)
+- [Getting started](https://github.com/TrustBound/dream_config/blob/main/docs/guides/getting-started.md)
+- [Load .env files](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md)
+- [Required values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/required-values.md)
+- [Optional values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/optional-values.md)
+- [Boolean values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/boolean-values.md)
 - [Changelog](https://github.com/TrustBound/dream_config/blob/main/CHANGELOG.md)
 
 ## Community
