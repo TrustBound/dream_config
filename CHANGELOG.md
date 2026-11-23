@@ -37,8 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its own reader.
 - Each code example in the `dream_config/loader` doc comments is now a
   tested snippet, and the examples are valid Gleam.
-- The package has guides in `docs/guides/`. The README is short and links
-  to them, and HexDocs shows the guides.
+- The package has three guides in `docs/guides/`, and HexDocs shows them:
+  Getting started (load settings at startup and stop with a clear message),
+  Use a .env file in development, and Read optional settings, numbers and
+  flags. Each guide walks through one task in steps, with failure cases, a
+  test of your own code and common pitfalls. Every code example in them is
+  a tested snippet. The README is short and links to them.
 
 ### Upgrading
 - If your code called `load_dotenv()` or `load_dotenv_from(path)` and
@@ -56,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 
-- 96 tests, 0 failed, 100% line coverage (92 of 92 lines), in about 2 seconds of wall time. Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2.
+- 159 tests, 0 failed, 100% line coverage (92 of 92 lines), in about 2 seconds of wall time. Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2.
 
 ## [1.0.2] - 2025-11-21
 

@@ -29,7 +29,13 @@ Each code example in the `dream_config/loader` doc comments is now a tested snip
 
 ### Guides
 
-The package has guides in [`docs/guides/`](https://github.com/TrustBound/dream_config/tree/main/docs/guides). The README is short and links to them, and HexDocs shows the guides.
+The package has three guides in [`docs/guides/`](https://github.com/TrustBound/dream_config/tree/main/docs/guides), and HexDocs shows them. Each one walks through one task in steps, with failure cases, a test of your own code and common pitfalls:
+
+- [Getting started](https://github.com/TrustBound/dream_config/blob/main/docs/guides/getting-started.md): load your settings into a typed record at startup, and stop with a clear message when one is missing or wrong
+- [Use a .env file in development](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md): load local values and a secrets file, the file format, and the errors for a bad file
+- [Read optional settings, numbers and flags](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md): defaults, numbers that must be valid, range checks, and the values that `get_bool` accepts
+
+Every code example in the guides is a tested snippet. The README is short and links to them.
 
 ## Bug Fixes
 
@@ -62,7 +68,7 @@ pub fn database_url_at_startup() -> Result(String, String) {
 
 ## Testing
 
-- 96 tests run, 0 failed, 100% line coverage (92 of 92 lines), in about 2 seconds of wall time (Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2)
+- 159 tests run, 0 failed, 100% line coverage (92 of 92 lines), in about 2 seconds of wall time (Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2)
 
 ## Upgrading
 
@@ -108,10 +114,8 @@ Text after a closing quote on the same line is now an error, unless it is a `#` 
 - [dream_config](https://hexdocs.pm/dream_config) - v1.1.0
 - [README](https://github.com/TrustBound/dream_config/blob/main/README.md)
 - [Getting started](https://github.com/TrustBound/dream_config/blob/main/docs/guides/getting-started.md)
-- [Load .env files](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md)
-- [Required values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/required-values.md)
-- [Optional values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/optional-values.md)
-- [Boolean values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/boolean-values.md)
+- [Use a .env file in development](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md)
+- [Read optional settings, numbers and flags](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md)
 - [Changelog](https://github.com/TrustBound/dream_config/blob/main/CHANGELOG.md)
 
 ## Community

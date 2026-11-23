@@ -66,15 +66,13 @@ pub fn load_settings() -> Result(Settings, String) {
 
 ## Guides
 
-- [Getting started](https://github.com/TrustBound/dream_config/blob/main/docs/guides/getting-started.md): install the package and load settings at startup
-- [Load .env files](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md): load variables from a `.env` file, the file format, and the errors
-- [Required values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/required-values.md): read values the application cannot run without
-- [Optional values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/optional-values.md): read values that have defaults
-- [Boolean values](https://github.com/TrustBound/dream_config/blob/main/docs/guides/boolean-values.md): read a variable as `True` or `False`
+- [Getting started](https://github.com/TrustBound/dream_config/blob/main/docs/guides/getting-started.md): load your app's settings into a typed record at startup, stop with a clear message when one is missing or wrong, and test the loader
+- [Use a .env file in development](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md): load local values from a `.env` file, load a secrets file from a path, the file format, and the errors for a bad file
+- [Read optional settings, numbers and flags](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md): defaults, numbers that must be valid, range checks, and the values that `get_bool` accepts
 
 ## API Reference
 
-The full API reference is on [HexDocs](https://hexdocs.pm/dream_config). Each guide lists the functions it uses.
+The full API reference is on [HexDocs](https://hexdocs.pm/dream_config).
 
 ## Design Principles
 

@@ -11,10 +11,8 @@ links = [
 [documentation]
 pages = [
     { title = "Getting started", path = "guides/getting-started.html", source = "./docs/guides/getting-started.md" },
-    { title = "Load .env files", path = "guides/env-files.html", source = "./docs/guides/env-files.md" },
-    { title = "Required values", path = "guides/required-values.html", source = "./docs/guides/required-values.md" },
-    { title = "Optional values", path = "guides/optional-values.html", source = "./docs/guides/optional-values.md" },
-    { title = "Boolean values", path = "guides/boolean-values.html", source = "./docs/guides/boolean-values.md" },
+    { title = "Use a .env file in development", path = "guides/env-files.html", source = "./docs/guides/env-files.md" },
+    { title = "Read optional settings, numbers and flags", path = "guides/typed-values.html", source = "./docs/guides/typed-values.md" },
 ]
 
 [dependencies]

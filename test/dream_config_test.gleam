@@ -12,7 +12,13 @@ import dream_test/coverage
 import dream_test/reporters/bdd
 import dream_test/reporters/progress
 import dream_test/runner
+import guide_env_files_test
+import guide_getting_started_test
+import guide_typed_values_test
 import readme_snippets_test
+import snippets/guide_env_files_testing
+import snippets/guide_getting_started_testing
+import snippets/guide_typed_values_testing
 
 pub fn main() {
   runner.new([
@@ -22,6 +28,12 @@ pub fn main() {
     doc_snippets_test.tests(),
     architecture_snippets_test.tests(),
     deployment_guide_snippets_test.tests(),
+    guide_getting_started_test.tests(),
+    guide_getting_started_testing.tests(),
+    guide_env_files_test.tests(),
+    guide_env_files_testing.tests(),
+    guide_typed_values_test.tests(),
+    guide_typed_values_testing.tests(),
   ])
   |> runner.max_concurrency(1)
   |> runner.progress_reporter(progress.new())
