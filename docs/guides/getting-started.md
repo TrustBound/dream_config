@@ -1,14 +1,14 @@
 # Load your app's settings at startup
 
-Your app needs a few things from outside its code: a database URL, a port, an API key, a switch for debug logs. You set them as environment variables, so the same build runs on your laptop, in CI and in production. But an environment variable is only a string, and it can be missing. You want to read all of them one time when the app starts, turn them into a typed record, and stop at once with a clear message when one of them is missing or wrong. This guide walks you through that, from the first value to a tested `main`.
+Your app needs a few things from outside its code: a database URL, a port, an API key, a switch for debug logs. You set them as environment variables, so the same build runs on your laptop, in CI and in production. But an environment variable is only a string, and it can be missing or empty. You want to read all of them one time when the app starts, turn them into a typed record, and stop at once with a clear message when one of them is missing or wrong. This guide walks you through that, from the first value to a tested `main`.
 
 ## Table of Contents
 
 - [What you'll build](#what-youll-build)
 - [Before you start](#before-you-start)
 - [Step 1: Read the required settings](#step-1-read-the-required-settings)
-- [Step 2: Add defaults and a .env file](#step-2-add-defaults-and-a-env-file)
-- [Step 3: Load the settings once in main](#step-3-load-the-settings-once-in-main)
+- [Step 2: Add settings with defaults](#step-2-add-settings-with-defaults)
+- [Step 3: Load the .env file and the settings once in main](#step-3-load-the-env-file-and-the-settings-once-in-main)
 - [When a setting is missing or wrong](#when-a-setting-is-missing-or-wrong)
 - [Which function to use](#which-function-to-use)
 - [Test your code](#test-your-code)
@@ -19,9 +19,9 @@ Your app needs a few things from outside its code: a database URL, a port, an AP
 
 In this guide you'll:
 
-- Read the settings that your app cannot run without, and get an error that names a missing one.
-- Add settings that have defaults, and load a `.env` file for local development.
-- Load the settings one time in `main`, and stop with a message and exit status 1 when a setting is missing or wrong.
+- Read the settings that your app cannot run without, and get an error that names a missing, empty or wrong one.
+- Add settings that have defaults.
+- Load a `.env` file and the settings one time in `main`, and stop with a message and exit status 1 when a setting is missing or wrong.
 - Test the code that reads your settings.
 
 ## Before you start
@@ -46,17 +46,17 @@ DATABASE_URL=postgres://localhost/app PORT=8080 gleam run
 
 Start with the settings that your app cannot run without. Describe them as a type, and read each one with a `get_required` function:
 
-### Load required settings <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_required_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+### Load required settings <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/readme_required_values.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
-import dream_config/loader as config
+import dream_config/loader.{type ConfigError} as config
 import gleam/result
 
 pub type AppConfig {
   AppConfig(database_url: String, port: Int)
 }
 
-pub fn load_config() -> Result(AppConfig, String) {
+pub fn load_config() -> Result(AppConfig, ConfigError) {
   use database_url <- result.try(config.get_required("DATABASE_URL"))
   use port <- result.try(config.get_required_int("PORT"))
 
@@ -64,7 +64,9 @@ pub fn load_config() -> Result(AppConfig, String) {
 }
 ```
 
-`get_required("DATABASE_URL")` returns `Ok` with the value of the variable, or an `Error(String)` that names the variable when it is not set. `get_required_int("PORT")` does the same, and it also parses the value as an integer. Both errors are strings, so they chain with `result.try`. The first setting that fails stops the chain and becomes the result.
+`get_required("DATABASE_URL")` returns `Ok` with the value of the variable. When the variable is not set, it returns `Error(NotSet("DATABASE_URL"))`. When the variable is set to an empty string, it returns `Error(Empty("DATABASE_URL"))`, because an empty database URL is as bad as none. `get_required_int("PORT")` does the same, and it also parses the value as an integer.
+
+All the read functions return the same error type, `ConfigError`, so they chain with `result.try`. The first setting that fails stops the chain and becomes the result.
 
 With `DATABASE_URL=postgres://localhost/app` and `PORT=8080`, `load_config()` returns:
 
@@ -75,40 +77,43 @@ Ok(AppConfig(database_url: "postgres://localhost/app", port: 8080))
 When `DATABASE_URL` is not set, it returns:
 
 ```text
-Error("Required environment variable not set: DATABASE_URL")
+Error(NotSet("DATABASE_URL"))
 ```
 
-When `PORT` is `eighty`, it returns:
+When `DATABASE_URL` is set to an empty string, for example by a `DATABASE_URL=` line, it returns:
 
 ```text
-Error("Environment variable PORT must be an integer")
+Error(Empty("DATABASE_URL"))
+```
+
+When `PORT` is `eighty`, it returns the name and the value:
+
+```text
+Error(NotAnInteger("PORT", "eighty"))
 ```
 
 The rest of your app gets an `AppConfig`, not strings from the environment. A function that needs the port takes an `Int`, and it never has to ask whether the port is set.
 
-## Step 2: Add defaults and a .env file
+## Step 2: Add settings with defaults
 
-Most apps also have settings with a sensible default, and a developer wants to keep the local values in a file instead of typing them for each run. This is the complete loader:
+Most apps also have settings with a sensible default. This is the complete settings loader:
 
-### Load settings at startup <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+### Read the settings into a record <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
-import dream_config/loader as config
+import dream_config/loader.{type ConfigError} as config
 import gleam/result
 
 pub type Settings {
   Settings(database_url: String, port: Int, debug_mode: Bool, api_key: String)
 }
 
-pub fn load_settings() -> Result(Settings, String) {
-  // Load .env file (optional, a missing file is not an error)
-  use _ <- result.try(config.load_dotenv())
-
-  // Get required configuration
+pub fn load_settings() -> Result(Settings, ConfigError) {
+  // Required: the error names the variable that is not set, empty or wrong
   use database_url <- result.try(config.get_required("DATABASE_URL"))
   use port <- result.try(config.get_required_int("PORT"))
 
-  // Get optional configuration with defaults
+  // Optional, with defaults
   let debug_mode = config.get_bool("DEBUG")
   let api_key = config.get("API_KEY") |> result.unwrap("default-key")
 
@@ -116,10 +121,10 @@ pub fn load_settings() -> Result(Settings, String) {
 }
 ```
 
-Two new things happen here:
+Two new functions read the optional settings:
 
-- `config.load_dotenv()` reads the file `.env` in the current directory and sets each variable in it. When there is no `.env` file, it returns `Ok(Nil)` and sets nothing. That is what you want in production, where the platform sets the variables and there is no file. A `.env` file that is there but is not valid is an error, and the loader stops on it. The [.env guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md) covers the file.
-- `config.get_bool("DEBUG")` is `True` for `true`, `1` or `yes` in any letter case, and `False` for anything else, including a variable that is not set. `config.get("API_KEY")` returns `Error(Nil)` when the variable is not set, and `result.unwrap` turns that into the default. The [optional settings guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md) covers these functions and their traps.
+- `config.get_bool("DEBUG")` is `True` for `true`, `1` or `yes` in any letter case, and `False` for anything else, including a variable that is not set.
+- `config.get("API_KEY")` returns `Error(NotSet("API_KEY"))` when the variable is not set, and `result.unwrap` turns that into the default. For a string, "not set" is the only error, so `result.unwrap` is safe here. For a number, it is not: the [optional settings guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md) shows the read that keeps a typo from becoming the default.
 
 With `DATABASE_URL=postgres://localhost/app`, `PORT=8080`, `DEBUG=true` and no `API_KEY`, `load_settings()` returns:
 
@@ -130,16 +135,17 @@ Ok(Settings(database_url: "postgres://localhost/app", port: 8080, debug_mode: Tr
 When `PORT` is not set, it returns:
 
 ```text
-Error("Required environment variable not set: PORT")
+Error(NotSet("PORT"))
 ```
 
-## Step 3: Load the settings once in main
+## Step 3: Load the .env file and the settings once in main
 
-Now call the loader from `main`. When the settings load, start the app with them. When they do not, print the reason to standard error and stop with exit status 1, so that a shell script, a container platform or a process supervisor sees the failure:
+Now call the loader from `main`. First load the `.env` file that holds the values for local development. Then load the settings. When they load, start the app with them. When they do not, print the reason to standard error and stop with exit status 1, so that a shell script, a container platform or a process supervisor sees the failure:
 
-### Start the app or stop with the reason <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/guide_getting_started_main.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+### Start the app or stop with the reason <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/guide_getting_started_main.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
+import dream_config/loader as config
 import gleam/int
 import gleam/io
 import gleam/result
@@ -156,7 +162,13 @@ pub fn main() -> Nil {
 }
 
 pub fn start() -> Result(String, String) {
-  use settings <- result.try(load_settings())
+  // Local values. A variable that is already set keeps its value.
+  use _ <- result.try(
+    config.load_dotenv() |> result.map_error(config.describe_load_error),
+  )
+  use settings <- result.try(
+    load_settings() |> result.map_error(config.describe),
+  )
   Ok(serve(settings))
 }
 
@@ -172,11 +184,25 @@ fn halt(status: Int) -> Nil
 
 Here is what each part does:
 
-- `start()` loads the settings and hands them to `serve`. It returns a `Result`, so you can test it without stopping anything. In a real app, `serve` starts your web server or your supervision tree. Here it returns a message, so you can see that the port arrived as an `Int`.
+- `config.load_dotenv()` reads the file `.env` in the current directory, and sets each variable of the file that is not set yet. A variable that the shell or the platform sets keeps its value. When there is no `.env` file, it returns `Ok(Nil)` and sets nothing. That is what you want in production, where the platform sets the variables and there is no file. A `.env` file that is there but is not valid is an error. The [.env guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md) covers the file.
+- `config.describe_load_error` and `config.describe` turn the two error types into one line of text. `start()` returns a `Result(String, String)`, so you can test it without stopping anything.
+- In a real app, `serve` starts your web server or your supervision tree. Here it returns a message, so you can see that the port arrived as an `Int`.
 - `main()` is the only place that decides what a failure means for the whole program. It prints `Cannot start: ` and the reason with `io.println_error`.
 - `halt(1)` is Erlang's `erlang:halt/1`. It stops the BEAM with that exit status. The snippet declares it with `@external`, so it needs no other package.
 
 With `DATABASE_URL=postgres://localhost/app` and `PORT=8080`, the program prints this and exits with status 0:
+
+```text
+Listening on port 8080
+```
+
+With no variables set and a `.env` file that holds `DATABASE_URL=postgres://localhost/app` and `PORT=4000`, it prints:
+
+```text
+Listening on port 4000
+```
+
+With the same file and `PORT=8080` set in the shell, the shell wins, and it prints:
 
 ```text
 Listening on port 8080
@@ -190,38 +216,52 @@ Each failure stops the program before it does any work, with one line that names
 Cannot start: Required environment variable not set: DATABASE_URL
 ```
 
+When `DATABASE_URL` is set to an empty string, it prints this and exits with status 1:
+
+```text
+Cannot start: Required environment variable is empty: DATABASE_URL
+```
+
 When `PORT` is set to `eighty`, it prints this and exits with status 1:
 
 ```text
 Cannot start: Environment variable PORT must be an integer
 ```
 
-A `.env` file with a line that is not valid also stops the program, with the path and the line number in the message. The [.env guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md#when-the-file-is-bad) lists each of those messages.
+When the `.env` file has a line that is not valid, for example `DATABASE_URL` with no `=`, it prints the path and the line number, and exits with status 1:
 
-Two things do not stop the program, because the functions cannot see a problem:
+```text
+Cannot start: Cannot load .env file at .env: line 1: expected NAME=VALUE
+```
 
-- An optional setting with a bad value. `get_int("PORT")` returns `Error(Nil)` both when `PORT` is not set and when it is `eighty`, so a default hides the typo. The [optional settings guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md#step-2-reject-a-bad-number-in-an-optional-setting) shows how to reject it.
-- A required setting that is set to an empty string. `get_required` returns `Ok("")` for it.
+The [.env guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md#when-the-file-is-bad) lists each error for a bad file.
+
+Two things do not stop the program, because you tell the functions that a problem is not one:
+
+- An optional number that you read with `result.unwrap(default)`. `get_int("PORT")` returns `Error(NotAnInteger("PORT", "eighty"))` for a typo, but `result.unwrap` throws that error away. Match on `NotSet` instead, as the [optional settings guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md#step-1-give-an-optional-number-a-default) shows.
+- A switch with a value that `get_bool` does not know, such as `on`. It is `False`, with no error.
 
 ## Which function to use
 
 | Your setting | Use | Why |
 |:---|:---|:---|
-| A string the app cannot run without, such as a database URL | `get_required(name)` | Its error names the variable, and it chains with `result.try`. |
-| A number the app cannot run without | `get_required_int(name)` | It also rejects a value that is not an integer, with a message that names the variable. |
-| A string with a default, or one that can be absent | `get(name)` | `Error(Nil)` means "not set". Pick the default with `result.unwrap`, or keep an `Option`. |
-| A number with a default | `get_int(name)` | Only when a typo may fall back to the default. Otherwise use the pattern in the [optional settings guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md#step-2-reject-a-bad-number-in-an-optional-setting). |
+| A string the app cannot run without, such as a database URL | `get_required(name)` | Its error is `NotSet` or `Empty`, with the name. |
+| A number the app cannot run without | `get_required_int(name)` | It also rejects a value that is not an integer, with `NotAnInteger(name, value)`. |
+| A string with a default, or one that can be absent or empty | `get(name)` | `NotSet` is its only error. Pick the default with `result.unwrap`, or keep an `Option`. |
+| A number with a default | `get_int(name)`, and a default only for `NotSet` | A typo stops the app. See the [optional settings guide](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md#step-1-give-an-optional-number-a-default). |
 | An on or off switch | `get_bool(name)` | `true`, `1` and `yes` in any letter case are `True`. Everything else is `False`. |
-| Local values in a file | `load_dotenv()` | It reads `.env` in the current directory. No file is not an error. |
+| Local values in a file | `load_dotenv()` | It reads `.env` in the current directory. No file is not an error. A variable that is set wins over the file. |
 | A file at a known path, such as a secrets file | `load_dotenv_from(path)` | A missing file is an error. |
+| The text of an error | `describe(error)` or `describe_load_error(error)` | One line that names the variable or the file. |
 
 ## Test your code
 
 Your settings loader reads the environment of the BEAM it runs in. A test sets the variables, calls the loader, and unsets the variables after. Here is a test module for `load_settings` from Step 2. It uses [dream_test](https://hexdocs.pm/dream_test):
 
-### Test load_settings <a href="https://github.com/TrustBound/dream_config/blob/1.1.0/test/snippets/guide_getting_started_testing.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
+### Test load_settings <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/guide_getting_started_testing.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a>
 
 ```gleam
+import dream_config/loader.{NotSet}
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
@@ -270,14 +310,14 @@ pub fn tests() -> TestSuite {
       // Assert
       settings
       |> should
-      |> be_equal(Error("Required environment variable not set: DATABASE_URL"))
+      |> be_equal(Error(NotSet("DATABASE_URL")))
       |> or_fail_with("Expected an error that names DATABASE_URL")
     }),
   ])
 }
 ```
 
-The `after_each` hook unsets every variable that a test can set, so the next test starts from a clean environment. Unset is also how you test a missing value: the second test sets only `PORT`, and expects the error that names `DATABASE_URL`.
+The `after_each` hook unsets every variable that a test can set, so the next test starts from a clean environment. Unset is also how you test a missing value: the second test sets only `PORT`, and expects `NotSet("DATABASE_URL")`. The test compares the error value, not its text, so a change in the wording of a message cannot break it.
 
 Environment variables belong to the whole BEAM, not to one test process. Two tests that run at the same time and set the same variable see each other's values. Run the tests that touch the environment one at a time. With dream_test, that is `runner.max_concurrency(1)` on the runner, as [this package's own test runner](https://github.com/TrustBound/dream_config/blob/main/test/dream_config_test.gleam) does.
 
@@ -285,16 +325,18 @@ Environment variables belong to the whole BEAM, not to one test process. Two tes
 
 ## Common pitfalls
 
-**Reading the environment all over the code.** *Symptom:* a missing variable shows up as a crash in the middle of a request, hours after a deploy. *Fix:* read every setting one time in `main`, as in [Step 3](#step-3-load-the-settings-once-in-main), and pass the record to the code that needs it.
+**Reading the environment all over the code.** *Symptom:* a missing variable shows up as a crash in the middle of a request, hours after a deploy. *Fix:* read every setting one time in `main`, as in [Step 3](#step-3-load-the-env-file-and-the-settings-once-in-main), and pass the record to the code that needs it.
 
 **Tests that change the same variables at the same time.** *Symptom:* a settings test fails now and then, with a value that another test set. *Fix:* run those tests one at a time, with `runner.max_concurrency(1)`.
 
-**A `.env` file in the project changes your tests.** *Symptom:* a test sets `DATABASE_URL`, but `load_settings` returns the value from your local `.env` file. *Fix:* `load_dotenv()` sets every variable in the file, and a value in the file replaces a value that is already set. Call `config.load_dotenv()` in `main` before `load_settings()`, not inside it, so that the tests of `load_settings` never read the file.
+**A `.env` file in the project changes your tests.** *Symptom:* a test expects `NotSet("DATABASE_URL")`, but gets the value from your local `.env` file. *Fix:* `load_dotenv()` sets each variable of the file that the test did not set. Call `config.load_dotenv()` in `start`, before `load_settings()`, not inside `load_settings`, as in Step 3. Then the tests of `load_settings` never read the file.
+
+**Matching on the text of an error.** *Symptom:* a check such as `string.contains(message, "not set")` breaks when a message changes. *Fix:* match on the error value, `NotSet(name)`, `Empty(name)` or `NotAnInteger(name, value)`. Use `describe` only for the text that a person reads.
 
 **The app starts from another directory.** *Symptom:* the app works with `gleam run` in the project, but reports a missing variable when you start it from somewhere else. *Fix:* `load_dotenv()` reads `.env` in the current working directory, and returns `Ok(Nil)` when it is not there. Start the app from the directory that holds the file, or load the file by its full path with `load_dotenv_from(path)`.
 
 ## Where to go next
 
-- [Use a .env file in development](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md): the file format, a second file for secrets, and the errors for a bad file.
-- [Read optional settings, numbers and flags](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md): defaults, numbers that must be valid, ranges, and the values that `get_bool` accepts.
-- [API reference on HexDocs](https://hexdocs.pm/dream_config/dream_config/loader.html): every function of `dream_config/loader`.
+- [Use a .env file in development](https://github.com/TrustBound/dream_config/blob/main/docs/guides/env-files.md): which value wins, the file format, a second file for secrets, and the errors for a bad file.
+- [Read optional settings, numbers and flags](https://github.com/TrustBound/dream_config/blob/main/docs/guides/typed-values.md): defaults that do not hide a typo, ranges, and the values that `get_bool` accepts.
+- [API reference on HexDocs](https://hexdocs.pm/dream_config/dream_config/loader.html): every function and error type of `dream_config/loader`.

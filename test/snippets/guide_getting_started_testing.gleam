@@ -2,6 +2,7 @@
 ////
 //// Tests load_settings by setting the environment variables it reads.
 
+import dream_config/loader.{NotSet}
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
@@ -50,7 +51,7 @@ pub fn tests() -> TestSuite {
       // Assert
       settings
       |> should
-      |> be_equal(Error("Required environment variable not set: DATABASE_URL"))
+      |> be_equal(Error(NotSet("DATABASE_URL")))
       |> or_fail_with("Expected an error that names DATABASE_URL")
     }),
   ])

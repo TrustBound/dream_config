@@ -1,6 +1,9 @@
 //// Tests for the `.env` parser in `dream_config/internal/dotenv`.
 
-import dream_config/internal/dotenv.{ParseError, Variable}
+import dream_config/internal/dotenv.{
+  Backtick, DoubleQuote, EmptyName, MissingEquals, QuoteNotClosed, SingleQuote,
+  TextAfterClosingQuote, Variable,
+}
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{describe, group, it}
@@ -109,7 +112,7 @@ pub fn tests() -> TestSuite {
         // Assert
         result
         |> should
-        |> be_equal(Error(ParseError(3, "expected NAME=VALUE")))
+        |> be_equal(Error(MissingEquals(3)))
         |> or_fail_with("parse should report line 3")
       }),
       it("reads Windows line endings", fn() {
@@ -129,7 +132,7 @@ pub fn tests() -> TestSuite {
         // Assert
         result
         |> should
-        |> be_equal(Error(ParseError(2, "expected NAME=VALUE")))
+        |> be_equal(Error(EmptyName(2)))
         |> or_fail_with("parse should reject an empty name on line 2")
       }),
       it("returns an error for a name without = at the end of the text", fn() {
@@ -139,7 +142,7 @@ pub fn tests() -> TestSuite {
         // Assert
         result
         |> should
-        |> be_equal(Error(ParseError(2, "expected NAME=VALUE")))
+        |> be_equal(Error(MissingEquals(2)))
         |> or_fail_with("parse should reject NAME on line 2")
       }),
       it("returns the opening line for a single quote that is not closed", fn() {
@@ -149,7 +152,7 @@ pub fn tests() -> TestSuite {
         // Assert
         result
         |> should
-        |> be_equal(Error(ParseError(2, "the single quote is not closed")))
+        |> be_equal(Error(QuoteNotClosed(2, SingleQuote)))
         |> or_fail_with("parse should report the single quote on line 2")
       }),
       it("returns an error for a backtick that is not closed", fn() {
@@ -159,7 +162,7 @@ pub fn tests() -> TestSuite {
         // Assert
         result
         |> should
-        |> be_equal(Error(ParseError(1, "the backtick is not closed")))
+        |> be_equal(Error(QuoteNotClosed(1, Backtick)))
         |> or_fail_with("parse should report the backtick on line 1")
       }),
       it("returns an error for text after a closing quote", fn() {
@@ -169,10 +172,18 @@ pub fn tests() -> TestSuite {
         // Assert
         result
         |> should
-        |> be_equal(
-          Error(ParseError(1, "unexpected text after the closing double quote")),
-        )
+        |> be_equal(Error(TextAfterClosingQuote(1, DoubleQuote)))
         |> or_fail_with("parse should reject text after the closing quote")
+      }),
+      it("skips one byte order mark at the start of the text", fn() {
+        // Act
+        let result = dotenv.parse("\u{FEFF}NAME=value\n")
+
+        // Assert
+        result
+        |> should
+        |> be_equal(Ok([Variable("NAME", "value")]))
+        |> or_fail_with("parse should not put the mark in the first name")
       }),
     ]),
   ])

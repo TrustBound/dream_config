@@ -7,6 +7,7 @@ import dream_config/loader as config
 pub fn database_url() -> Result(String, String) {
   case config.get_required("DATABASE_URL") {
     Ok(url) -> Ok(url)
-    Error(message) -> Error("Cannot start the application: " <> message)
+    Error(error) ->
+      Error("Cannot start the application: " <> config.describe(error))
   }
 }

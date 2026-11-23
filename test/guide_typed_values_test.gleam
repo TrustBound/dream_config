@@ -2,15 +2,16 @@
 //// numbers and flags (docs/guides/typed-values.md). `after_each` unsets
 //// every variable that a test can set.
 
-import dream_config/loader as config
+import dream_config/loader.{NotAnInteger} as config
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
 import envoy
 import gleam/option
+import gleam/result
+import snippets/doc_get
 import snippets/guide_typed_values_pool_size
 import snippets/guide_typed_values_port
-import snippets/readme_optional_values
 
 pub fn tests() -> TestSuite {
   describe("typed values guide", [
@@ -19,23 +20,9 @@ pub fn tests() -> TestSuite {
       envoy.unset("API_KEY")
       envoy.unset("DEBUG")
       envoy.unset("POOL_SIZE")
-      envoy.unset("DATABASE_URL")
       Ok(Nil)
     }),
-    it("step 1: a PORT that is not a number becomes the default", fn() {
-      // Arrange
-      envoy.set("PORT", "eighty")
-
-      // Act
-      let result = readme_optional_values.read_optional_values()
-
-      // Assert
-      result
-      |> should
-      |> be_equal(#(option.None, 3000))
-      |> or_fail_with("get_int hides the bad value")
-    }),
-    it("step 2: port rejects a PORT that is not a number", fn() {
+    it("step 1: port rejects a PORT that is not a number", fn() {
       // Arrange
       envoy.set("PORT", "eighty")
 
@@ -45,8 +32,84 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
+      |> be_equal(Error(NotAnInteger("PORT", "eighty")))
+      |> or_fail_with("port should stop on eighty")
+    }),
+    it("step 1: port rejects an empty PORT", fn() {
+      // Arrange
+      envoy.set("PORT", "")
+
+      // Act
+      let result = guide_typed_values_port.port()
+
+      // Assert
+      result
+      |> should
+      |> be_equal(Error(NotAnInteger("PORT", "")))
+      |> or_fail_with("port should stop on an empty value")
+    }),
+    it("step 1: describe gives the text for a PORT that is not a number", fn() {
+      // Arrange
+      envoy.set("PORT", "eighty")
+
+      // Act
+      let result =
+        guide_typed_values_port.port() |> result.map_error(config.describe)
+
+      // Assert
+      result
+      |> should
       |> be_equal(Error("Environment variable PORT must be an integer"))
-      |> or_fail_with("port should name PORT")
+      |> or_fail_with("describe should name PORT")
+    }),
+    it("step 1: result.unwrap hides a PORT that is not a number", fn() {
+      // Arrange
+      envoy.set("PORT", "eighty")
+
+      // Act
+      let result = config.get_int("PORT") |> result.unwrap(3000)
+
+      // Assert
+      result
+      |> should
+      |> be_equal(3000)
+      |> or_fail_with("unwrap should give the default")
+    }),
+    it("step 2: api_key reads API_KEY", fn() {
+      // Arrange
+      envoy.set("API_KEY", "example-api-key")
+
+      // Act
+      let result = doc_get.api_key()
+
+      // Assert
+      result
+      |> should
+      |> be_equal(option.Some("example-api-key"))
+      |> or_fail_with("api_key should read API_KEY")
+    }),
+    it("step 2: api_key is None when API_KEY is not set", fn() {
+      // Act
+      let result = doc_get.api_key()
+
+      // Assert
+      result
+      |> should
+      |> be_equal(option.None)
+      |> or_fail_with("api_key should be None")
+    }),
+    it("step 2: api_key keeps an empty API_KEY", fn() {
+      // Arrange
+      envoy.set("API_KEY", "")
+
+      // Act
+      let result = doc_get.api_key()
+
+      // Assert
+      result
+      |> should
+      |> be_equal(option.Some(""))
+      |> or_fail_with("an optional value can be empty")
     }),
     it("step 3: get_bool reads true as True", fn() {
       // Arrange
@@ -250,6 +313,19 @@ pub fn tests() -> TestSuite {
       |> be_equal(Error("Required environment variable not set: POOL_SIZE"))
       |> or_fail_with("pool_size should name POOL_SIZE")
     }),
+    it("step 4: pool_size when POOL_SIZE is empty", fn() {
+      // Arrange
+      envoy.set("POOL_SIZE", "")
+
+      // Act
+      let result = guide_typed_values_pool_size.pool_size()
+
+      // Assert
+      result
+      |> should
+      |> be_equal(Error("Required environment variable is empty: POOL_SIZE"))
+      |> or_fail_with("pool_size should reject an empty value")
+    }),
     it("numbers: get_int reads `8080` as Ok(8080)", fn() {
       // Arrange
       envoy.set("PORT", "8080")
@@ -302,7 +378,7 @@ pub fn tests() -> TestSuite {
       |> be_equal(Ok(-1))
       |> or_fail_with("get_int should read -1 as Ok(-1)")
     }),
-    it("numbers: get_int reads ` 8080` as Error(Nil)", fn() {
+    it("numbers: get_int reads ` 8080` as NotAnInteger", fn() {
       // Arrange
       envoy.set("PORT", " 8080")
 
@@ -312,10 +388,10 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("get_int should read 8080 as Error(Nil)")
+      |> be_equal(Error(NotAnInteger("PORT", " 8080")))
+      |> or_fail_with("get_int should read 8080 as NotAnInteger")
     }),
-    it("numbers: get_int reads `8_080` as Error(Nil)", fn() {
+    it("numbers: get_int reads `8_080` as NotAnInteger", fn() {
       // Arrange
       envoy.set("PORT", "8_080")
 
@@ -325,10 +401,10 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("get_int should read 8_080 as Error(Nil)")
+      |> be_equal(Error(NotAnInteger("PORT", "8_080")))
+      |> or_fail_with("get_int should read 8_080 as NotAnInteger")
     }),
-    it("numbers: get_int reads `0x1F` as Error(Nil)", fn() {
+    it("numbers: get_int reads `0x1F` as NotAnInteger", fn() {
       // Arrange
       envoy.set("PORT", "0x1F")
 
@@ -338,10 +414,10 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("get_int should read 0x1F as Error(Nil)")
+      |> be_equal(Error(NotAnInteger("PORT", "0x1F")))
+      |> or_fail_with("get_int should read 0x1F as NotAnInteger")
     }),
-    it("numbers: get_int reads `8080.0` as Error(Nil)", fn() {
+    it("numbers: get_int reads `8080.0` as NotAnInteger", fn() {
       // Arrange
       envoy.set("PORT", "8080.0")
 
@@ -351,10 +427,10 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("get_int should read 8080.0 as Error(Nil)")
+      |> be_equal(Error(NotAnInteger("PORT", "8080.0")))
+      |> or_fail_with("get_int should read 8080.0 as NotAnInteger")
     }),
-    it("numbers: get_int reads `` as Error(Nil)", fn() {
+    it("numbers: get_int reads `` as NotAnInteger", fn() {
       // Arrange
       envoy.set("PORT", "")
 
@@ -364,21 +440,8 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("get_int should read empty as Error(Nil)")
-    }),
-    it("pitfall: get_required accepts an empty value", fn() {
-      // Arrange
-      envoy.set("DATABASE_URL", "")
-
-      // Act
-      let result = config.get_required("DATABASE_URL")
-
-      // Assert
-      result
-      |> should
-      |> be_equal(Ok(""))
-      |> or_fail_with("An empty value is set")
+      |> be_equal(Error(NotAnInteger("PORT", "")))
+      |> or_fail_with("get_int should read empty as NotAnInteger")
     }),
   ])
 }

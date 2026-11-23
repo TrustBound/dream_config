@@ -2,11 +2,11 @@
 ////
 //// Reads a required integer and uses it.
 
-import dream_config/loader as config
+import dream_config/loader.{type ConfigError} as config
 import gleam/int
 import gleam/result
 
-pub fn listen_address() -> Result(String, String) {
+pub fn listen_address() -> Result(String, ConfigError) {
   use port <- result.try(config.get_required_int("PORT"))
   Ok("0.0.0.0:" <> int.to_string(port))
 }

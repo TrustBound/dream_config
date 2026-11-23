@@ -16,6 +16,7 @@ import guide_env_files_test
 import guide_getting_started_test
 import guide_typed_values_test
 import readme_snippets_test
+import release_notes_snippets_test
 import snippets/guide_env_files_testing
 import snippets/guide_getting_started_testing
 import snippets/guide_typed_values_testing
@@ -26,6 +27,7 @@ pub fn main() {
     dotenv_test.tests(),
     readme_snippets_test.tests(),
     doc_snippets_test.tests(),
+    release_notes_snippets_test.tests(),
     architecture_snippets_test.tests(),
     deployment_guide_snippets_test.tests(),
     guide_getting_started_test.tests(),

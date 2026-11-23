@@ -5,15 +5,55 @@ All notable changes to `dream_config` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - Unreleased
+## [2.0.0] - Unreleased
+
+Version 1.1.0 was never released. Its changes are part of 2.0.0.
+
+### Breaking
+- `load_dotenv()` and `load_dotenv_from(path)` set only the variables that
+  are not set yet in the environment. A variable that is already set keeps
+  its value, also when its value is an empty string. Before, a value in the
+  file replaced a variable that was set. The new functions
+  `load_dotenv_override()` and `load_dotenv_override_from(path)` keep the
+  old behavior: the file wins. With both, the last line of the file wins
+  when a name is on more than one line.
+- `get`, `get_int`, `get_required` and `get_required_int` return
+  `Result(_, ConfigError)`, with `NotSet(name)`,
+  `NotAnInteger(name, value)` and `Empty(name)`. Before, `get` and `get_int`
+  returned `Error(Nil)`, and the required functions returned
+  `Error(String)`. The new function `describe(error)` gives the text of the
+  messages from before, for example
+  `Required environment variable not set: PORT`. `get_bool` is the same as
+  before.
+- `get_int` returns `NotSet(name)` for a variable that is not set and
+  `NotAnInteger(name, value)` for a value that is not an integer. Before,
+  both were `Error(Nil)`, so a default hid a typo.
+- `get_required` and `get_required_int` return `Empty(name)` for a variable
+  that is set to an empty string. Before, `get_required` returned `Ok("")`.
+  `describe(Empty("DATABASE_URL"))` is
+  `Required environment variable is empty: DATABASE_URL`. `get` still
+  returns `Ok("")`.
+- The four load functions return `Result(Nil, LoadError)`, with one variant
+  for each cause: `FileNotFound(path)`, `FileNotReadable(path, reason)`,
+  `FileNotUtf8(path)`, `MissingEquals(path, line)`, `EmptyName(path, line)`,
+  `QuoteNotClosed(path, line, quote)` and
+  `TextAfterClosingQuote(path, line, quote)`, where `quote` is
+  `DoubleQuote`, `SingleQuote` or `Backtick`. The new function
+  `describe_load_error(error)` gives the text of the messages from before,
+  for example `Cannot load .env file at .env: line 2: expected NAME=VALUE`.
 
 ### Fixed
+- A `.env` file that starts with a byte order mark (the bytes `EF BB BF`)
+  kept the mark in the first variable name, so `get` could not find that
+  variable. The reader now skips one byte order mark at the start of the
+  file.
 - `load_dotenv()` and `load_dotenv_from(path)` always returned `Ok(Nil)`,
   although their type is `Result(Nil, String)` and the docs said that a bad
   file is an error. The `dot_env` load functions return `Nil` and only print
   the problem to standard error, so the error was lost. Both functions now
-  read and parse the file themselves and return `Error(String)` with the
-  path and the reason:
+  read and parse the file themselves and return an error with the path and
+  the reason (a `LoadError`, see "Breaking"). The texts of
+  `describe_load_error` are:
   - the file cannot be read (no permission, a directory, or not UTF-8), for
     example `Cannot load .env file at .env: permission denied`
   - a line is not valid (no `=`, an empty name, a quote that is not closed,
@@ -45,9 +85,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a tested snippet. The README is short and links to them.
 
 ### Upgrading
+- Match on `ConfigError` and `LoadError` instead of the text of a message.
+  Where you need the text, call `describe(error)` or
+  `describe_load_error(error)`, for example
+  `config.get_required("DATABASE_URL") |> result.map_error(config.describe)`.
+- If you relied on the `.env` file replacing variables that are set, call
+  `load_dotenv_override()` or `load_dotenv_override_from(path)`.
+- If you load two files and want the second one to win, load it first, or
+  load it with `load_dotenv_override_from(path)`.
+- If a required setting can be empty, read it with `get(name)` instead of
+  `get_required(name)`.
+- Replace `Error(Nil)` in matches on `get` and `get_int` with
+  `Error(NotSet(_))`, and handle `NotAnInteger` for `get_int`.
 - If your code called `load_dotenv()` or `load_dotenv_from(path)` and
   ignored the result, a bad file is now an `Error`. Handle it, for example
-  with `use _ <- result.try(config.load_dotenv())`.
+  with `config.load_dotenv() |> result.map_error(config.describe_load_error)`
+  in a `result.try` chain.
 - If you call `load_dotenv_from(path)` with a path that may not exist, check
   for the file first or treat the `Error` as "no file".
 - A `.env` line with no `=` used to be joined with the next line into one
@@ -60,7 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 
-- 159 tests, 0 failed, 100% line coverage (92 of 92 lines), in about 2 seconds of wall time. Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2.
+- 218 tests run, 0 failed, 100% line coverage (137 of 137 lines), in about 1 second of test time and 2.6 seconds of wall time for `make test` (tests run one at a time), measured two times on an Apple M1 Max, 10 cores, 64 GB, macOS 26.5.1, OTP 29, Gleam 1.19.2, with a load average of about 4
 
 ## [1.0.2] - 2025-11-21
 

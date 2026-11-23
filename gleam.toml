@@ -1,5 +1,5 @@
 name = "dream_config"
-version = "1.1.0"
+version = "2.0.0"
 description = "Type-safe configuration management for Gleam applications"
 licences = ["MIT"]
 repository = { type = "github", user = "TrustBound", repo = "dream_config" }
@@ -27,4 +27,4 @@ dream_snippets = { git = "https://github.com/TrustBound/dream_snippets.git", ref
 
 [tools.dream_snippets]
 # Changelog sections and release notes before this version are history. They are not checked.
-checked_from_version = "1.1.0"
+checked_from_version = "2.0.0"

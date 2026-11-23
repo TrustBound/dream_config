@@ -1,8 +1,9 @@
 //// Guide: Getting started, step 3
 ////
-//// Loads the settings once in main, and stops with a clear message when a
-//// setting is missing or wrong.
+//// Loads the .env file and the settings once, then starts the app or stops
+//// with the reason.
 
+import dream_config/loader as config
 import gleam/int
 import gleam/io
 import gleam/result
@@ -19,7 +20,13 @@ pub fn main() -> Nil {
 }
 
 pub fn start() -> Result(String, String) {
-  use settings <- result.try(load_settings())
+  // Local values. A variable that is already set keeps its value.
+  use _ <- result.try(
+    config.load_dotenv() |> result.map_error(config.describe_load_error),
+  )
+  use settings <- result.try(
+    load_settings() |> result.map_error(config.describe),
+  )
   Ok(serve(settings))
 }
 

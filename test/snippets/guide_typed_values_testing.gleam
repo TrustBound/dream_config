@@ -2,6 +2,7 @@
 ////
 //// Tests port for each case: not set, a number, and not a number.
 
+import dream_config/loader.{NotAnInteger}
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
 import dream_test/unit.{after_each, describe, it}
@@ -47,7 +48,7 @@ pub fn tests() -> TestSuite {
       // Assert
       result
       |> should
-      |> be_equal(Error("Environment variable PORT must be an integer"))
+      |> be_equal(Error(NotAnInteger("PORT", "80a")))
       |> or_fail_with("Expected an error, not the default")
     }),
   ])

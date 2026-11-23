@@ -16,6 +16,7 @@
 ////   the same line.
 //// - A line that starts with `#` is a comment. Empty lines are skipped.
 //// - Windows line endings (`\r\n`) are read as `\n`.
+//// - One byte order mark (U+FEFF) at the start of the text is skipped.
 
 import gleam/list
 import gleam/result
@@ -31,11 +32,21 @@ pub type Variable {
 /// `line` is the line number (from 1) where the problem is. For a quote that
 /// is not closed, it is the line of the opening quote.
 pub type ParseError {
-  ParseError(line: Int, reason: String)
+  /// A line has no `=` after the name.
+  MissingEquals(line: Int)
+  /// The name before the `=` is empty.
+  EmptyName(line: Int)
+  /// A quoted value has no closing quote.
+  QuoteNotClosed(line: Int, quote: Quote)
+  /// Text other than spaces or a comment follows a closing quote.
+  TextAfterClosingQuote(line: Int, quote: Quote)
 }
 
-type Quote {
-  Quote(character: String, name: String)
+/// The kind of quote around a value.
+pub type Quote {
+  DoubleQuote
+  SingleQuote
+  Backtick
 }
 
 /// Parse the text of a `.env` file into its variables, in file order.
@@ -45,9 +56,17 @@ type Quote {
 /// closing quote.
 pub fn parse(text: String) -> Result(List(Variable), ParseError) {
   text
+  |> skip_byte_order_mark
   |> string.replace("\r\n", "\n")
   |> string.to_graphemes
   |> parse_lines(1, [])
+}
+
+fn skip_byte_order_mark(text: String) -> String {
+  case text {
+    "\u{FEFF}" <> rest -> rest
+    _ -> text
+  }
 }
 
 fn parse_lines(
@@ -84,7 +103,7 @@ fn parse_name(
 ) -> Result(#(String, List(String)), ParseError) {
   case characters {
     ["=", ..rest] -> check_name(join(name) |> string.trim, rest, line)
-    [] | ["\n", ..] -> Error(ParseError(line, "expected NAME=VALUE"))
+    [] | ["\n", ..] -> Error(MissingEquals(line))
     [character, ..rest] -> parse_name(rest, line, [character, ..name])
   }
 }
@@ -95,7 +114,7 @@ fn check_name(
   line: Int,
 ) -> Result(#(String, List(String)), ParseError) {
   case name {
-    "" -> Error(ParseError(line, "expected NAME=VALUE"))
+    "" -> Error(EmptyName(line))
     _ -> Ok(#(name, rest))
   }
 }
@@ -107,11 +126,9 @@ fn parse_value(
   line: Int,
 ) -> Result(#(String, List(String), Int), ParseError) {
   case characters {
-    ["\"", ..rest] ->
-      parse_quoted(rest, Quote("\"", "double quote"), line, line, [])
-    ["'", ..rest] ->
-      parse_quoted(rest, Quote("'", "single quote"), line, line, [])
-    ["`", ..rest] -> parse_quoted(rest, Quote("`", "backtick"), line, line, [])
+    ["\"", ..rest] -> parse_quoted(rest, DoubleQuote, line, line, [])
+    ["'", ..rest] -> parse_quoted(rest, SingleQuote, line, line, [])
+    ["`", ..rest] -> parse_quoted(rest, Backtick, line, line, [])
     _ -> Ok(parse_unquoted(characters, line, []))
   }
 }
@@ -135,10 +152,9 @@ fn parse_quoted(
   line: Int,
   value: List(String),
 ) -> Result(#(String, List(String), Int), ParseError) {
-  let quote_character = quote.character
+  let quote_character = quote_character(quote)
   case characters {
-    [] ->
-      Error(ParseError(opening_line, "the " <> quote.name <> " is not closed"))
+    [] -> Error(QuoteNotClosed(opening_line, quote))
     ["\\", character, ..rest] if character == quote_character ->
       parse_quoted(rest, quote, opening_line, line, [character, ..value])
     ["\\", "n", ..rest] if quote_character == "\"" ->
@@ -171,8 +187,15 @@ fn skip_to_line_end(
     [] | ["\n", ..] -> Ok(characters)
     [" ", ..rest] | ["\t", ..rest] -> skip_to_line_end(rest, quote, line)
     ["#", ..rest] -> Ok(skip_comment(rest))
-    _ ->
-      Error(ParseError(line, "unexpected text after the closing " <> quote.name))
+    _ -> Error(TextAfterClosingQuote(line, quote))
+  }
+}
+
+fn quote_character(quote: Quote) -> String {
+  case quote {
+    DoubleQuote -> "\""
+    SingleQuote -> "'"
+    Backtick -> "`"
   }
 }
 

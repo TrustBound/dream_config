@@ -2,7 +2,10 @@
 //// (docs/guides/env-files.md). `after_each` unsets every variable that a
 //// test can set and deletes every file that a test can write.
 
-import dream_config/loader as config
+import dream_config/loader.{
+  DoubleQuote, FileNotFound, FileNotReadable, FileNotUtf8, MissingEquals, NotSet,
+  QuoteNotClosed,
+} as config
 import dream_test/file
 import dream_test/matchers.{be_equal, or_fail_with, should}
 import dream_test/suite.{type TestSuite}
@@ -11,6 +14,7 @@ import envoy
 import fixtures/test_file
 import gleam/result
 import snippets/doc_load_dotenv
+import snippets/doc_load_dotenv_override
 import snippets/readme_load_env_files
 
 const development_path = "test/fixtures/guide_development.env"
@@ -21,7 +25,7 @@ const format_path = "test/fixtures/guide_format.env"
 
 const unreadable_path = "build/guide_env_files_unreadable.env"
 
-const byte_order_mark_path = "build/guide_env_files_byte_order_mark.env"
+const byte_order_mark_path = "test/fixtures/byte_order_mark.env"
 
 pub fn tests() -> TestSuite {
   describe("env files guide", [
@@ -46,10 +50,9 @@ pub fn tests() -> TestSuite {
       envoy.unset("DREAM_CONFIG_TEST_NOT_UTF8")
       envoy.unset("DREAM_CONFIG_TEST_GREETING")
       envoy.unset("DREAM_CONFIG_SNIPPET_GREETING")
-      envoy.unset("\u{FEFF}DATABASE_URL")
+      envoy.unset("DREAM_CONFIG_TEST_VALUE")
       use _ <- result.try(test_file.delete_if_present(".env"))
-      use _ <- result.try(test_file.delete_if_present(unreadable_path))
-      test_file.delete_if_present(byte_order_mark_path)
+      test_file.delete_if_present(unreadable_path)
     }),
     it("step 2: database_url_at_startup reads the .env file", fn() {
       // Arrange
@@ -77,98 +80,182 @@ pub fn tests() -> TestSuite {
       |> be_equal(Ok("postgres://db.internal:5432/myapp"))
       |> or_fail_with("A missing .env file is not an error")
     }),
-    it("step 2: a value in the .env file replaces a value that is set", fn() {
+    it("step 2: a variable that is set wins over the .env file", fn() {
       // Arrange
       envoy.set("DATABASE_URL", "postgres://db.internal:5432/myapp")
       use _ <- result.try(copy_file(development_path, ".env"))
 
       // Act
-      let url = doc_load_dotenv.database_url_at_startup()
+      let result = doc_load_dotenv.database_url_at_startup()
 
       // Assert
-      url
+      result
       |> should
-      |> be_equal(Ok("postgres://localhost:5432/myapp_dev"))
-      |> or_fail_with("The .env file should win over the environment")
+      |> be_equal(Ok("postgres://db.internal:5432/myapp"))
+      |> or_fail_with("The environment should win over the .env file")
     }),
-    it("step 3: load_env_files sets the variables of the second file", fn() {
+    it("step 3: database_url_from_file lets the .env file win", fn() {
       // Arrange
-      use _ <- result.try(readme_load_env_files.load_env_files(secrets_path))
+      envoy.set("DATABASE_URL", "postgres://db.internal:5432/myapp")
+      use _ <- result.try(copy_file(development_path, ".env"))
 
       // Act
-      let key = config.get("API_KEY")
+      let result = doc_load_dotenv_override.database_url_from_file()
 
       // Assert
-      key
+      result
+      |> should
+      |> be_equal(Ok("postgres://localhost:5432/myapp_dev"))
+      |> or_fail_with("The .env file should win with load_dotenv_override")
+    }),
+    it("step 4: load_env_files sets the variables of the secrets file", fn() {
+      // Arrange
+      use _ <- result.try(
+        described(readme_load_env_files.load_env_files(secrets_path)),
+      )
+
+      // Act
+      let result = config.get("API_KEY")
+
+      // Assert
+      result
       |> should
       |> be_equal(Ok("secret-from-the-platform"))
       |> or_fail_with("API_KEY should come from the secrets file")
     }),
-    it("step 3: the second file wins over .env", fn() {
+    it("step 4: the secrets file wins over .env", fn() {
       // Arrange
       use _ <- result.try(copy_file(development_path, ".env"))
-      use _ <- result.try(readme_load_env_files.load_env_files(secrets_path))
+      use _ <- result.try(
+        described(readme_load_env_files.load_env_files(secrets_path)),
+      )
 
       // Act
-      let url = config.get("DATABASE_URL")
+      let result = config.get("DATABASE_URL")
 
       // Assert
-      url
+      result
       |> should
       |> be_equal(Ok("postgres://db.internal:5432/myapp"))
-      |> or_fail_with("The file loaded last should win")
+      |> or_fail_with("The file loaded first should win")
+    }),
+    it("step 4: .env sets the names that the secrets file does not have", fn() {
+      // Arrange
+      use _ <- result.try(copy_file(development_path, ".env"))
+      use _ <- result.try(
+        described(readme_load_env_files.load_env_files(secrets_path)),
+      )
+
+      // Act
+      let result = config.get("PORT")
+
+      // Assert
+      result
+      |> should
+      |> be_equal(Ok("8080"))
+      |> or_fail_with("PORT should come from the .env file")
     }),
     it("errors: the file does not exist", fn() {
       // Act
-      let loaded =
+      let result =
         readme_load_env_files.load_env_files("test/fixtures/does_not_exist.env")
 
       // Assert
-      loaded
+      result
+      |> should
+      |> be_equal(Error(FileNotFound("test/fixtures/does_not_exist.env")))
+      |> or_fail_with("load_env_files should return the error")
+    }),
+    it("errors: the text when the file does not exist", fn() {
+      // Act
+      let result =
+        readme_load_env_files.load_env_files("test/fixtures/does_not_exist.env")
+        |> result.map_error(config.describe_load_error)
+
+      // Assert
+      result
       |> should
       |> be_equal(Error(
         "Cannot load .env file at test/fixtures/does_not_exist.env: the file does not exist",
       ))
-      |> or_fail_with("load_env_files should give the path and the reason")
+      |> or_fail_with("describe_load_error should give the path and the reason")
     }),
     it("errors: a line has no =", fn() {
       // Act
-      let loaded =
+      let result =
         readme_load_env_files.load_env_files("test/fixtures/missing_equals.env")
 
       // Assert
-      loaded
+      result
+      |> should
+      |> be_equal(Error(MissingEquals("test/fixtures/missing_equals.env", 2)))
+      |> or_fail_with("load_env_files should return the error")
+    }),
+    it("errors: the text when a line has no =", fn() {
+      // Act
+      let result =
+        readme_load_env_files.load_env_files("test/fixtures/missing_equals.env")
+        |> result.map_error(config.describe_load_error)
+
+      // Assert
+      result
       |> should
       |> be_equal(Error(
         "Cannot load .env file at test/fixtures/missing_equals.env: line 2: expected NAME=VALUE",
       ))
-      |> or_fail_with("load_env_files should give the path and the reason")
+      |> or_fail_with("describe_load_error should give the path and the reason")
     }),
     it("errors: a quote is not closed", fn() {
       // Act
-      let loaded =
+      let result =
         readme_load_env_files.load_env_files("test/fixtures/unclosed_quote.env")
 
       // Assert
-      loaded
+      result
+      |> should
+      |> be_equal(
+        Error(QuoteNotClosed("test/fixtures/unclosed_quote.env", 1, DoubleQuote)),
+      )
+      |> or_fail_with("load_env_files should return the error")
+    }),
+    it("errors: the text when a quote is not closed", fn() {
+      // Act
+      let result =
+        readme_load_env_files.load_env_files("test/fixtures/unclosed_quote.env")
+        |> result.map_error(config.describe_load_error)
+
+      // Assert
+      result
       |> should
       |> be_equal(Error(
         "Cannot load .env file at test/fixtures/unclosed_quote.env: line 1: the double quote is not closed",
       ))
-      |> or_fail_with("load_env_files should give the path and the reason")
+      |> or_fail_with("describe_load_error should give the path and the reason")
     }),
     it("errors: the file is not UTF-8", fn() {
       // Act
-      let loaded =
+      let result =
         readme_load_env_files.load_env_files("test/fixtures/not_utf8.env")
 
       // Assert
-      loaded
+      result
+      |> should
+      |> be_equal(Error(FileNotUtf8("test/fixtures/not_utf8.env")))
+      |> or_fail_with("load_env_files should return the error")
+    }),
+    it("errors: the text when the file is not UTF-8", fn() {
+      // Act
+      let result =
+        readme_load_env_files.load_env_files("test/fixtures/not_utf8.env")
+        |> result.map_error(config.describe_load_error)
+
+      // Assert
+      result
       |> should
       |> be_equal(Error(
         "Cannot load .env file at test/fixtures/not_utf8.env: the file is not valid UTF-8",
       ))
-      |> or_fail_with("load_env_files should give the path and the reason")
+      |> or_fail_with("describe_load_error should give the path and the reason")
     }),
     it("errors: the file cannot be read", fn() {
       // Arrange
@@ -179,19 +266,43 @@ pub fn tests() -> TestSuite {
       )
 
       // Act
-      let loaded = readme_load_env_files.load_env_files(unreadable_path)
+      let result = readme_load_env_files.load_env_files(unreadable_path)
 
       // Assert
-      loaded
+      result
+      |> should
+      |> be_equal(
+        Error(FileNotReadable(
+          "build/guide_env_files_unreadable.env",
+          "permission denied",
+        )),
+      )
+      |> or_fail_with("load_env_files should return the error")
+    }),
+    it("errors: the text when the file cannot be read", fn() {
+      // Arrange
+      use _ <- result.try(copy_file(development_path, unreadable_path))
+      use _ <- result.try(
+        test_file.make_unreadable(unreadable_path)
+        |> result.replace_error("Cannot change the permissions"),
+      )
+
+      // Act
+      let result =
+        readme_load_env_files.load_env_files(unreadable_path)
+        |> result.map_error(config.describe_load_error)
+
+      // Assert
+      result
       |> should
       |> be_equal(Error(
         "Cannot load .env file at build/guide_env_files_unreadable.env: permission denied",
       ))
-      |> or_fail_with("load_env_files should give the path and the reason")
+      |> or_fail_with("describe_load_error should give the path and the reason")
     }),
     it("format: export before a name has no effect", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("EXPORTED")
@@ -204,7 +315,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: a lower-case name is changed to upper case", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("LOWER_NAME")
@@ -217,7 +328,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: the lower-case name is not set", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("lower_name")
@@ -225,12 +336,12 @@ pub fn tests() -> TestSuite {
       // Assert
       value
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("lower_name should be Error(Nil)")
+      |> be_equal(Error(NotSet("lower_name")))
+      |> or_fail_with("lower_name should not be set")
     }),
     it("format: spaces around an unquoted value are trimmed", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("SPACED_VALUE")
@@ -243,7 +354,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: a # ends an unquoted value", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("PASSWORD")
@@ -256,7 +367,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: a # in quotes is part of the value", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("QUOTED_PASSWORD")
@@ -269,7 +380,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: the value starts after the first =", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("URL")
@@ -284,7 +395,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: an empty value is set as an empty string", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("EMPTY")
@@ -297,7 +408,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: a reference to another variable is not expanded", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("REFERENCE")
@@ -310,7 +421,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: the last line for a name wins", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("REPEATED")
@@ -323,7 +434,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: \\n in double quotes is a line break", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("DOUBLE_QUOTED")
@@ -336,7 +447,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: \\n in single quotes stays as written", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("SINGLE_QUOTED")
@@ -349,7 +460,7 @@ pub fn tests() -> TestSuite {
     }),
     it("format: a quoted value can hold line breaks", fn() {
       // Arrange
-      use _ <- result.try(config.load_dotenv_from(format_path))
+      use _ <- result.try(described(config.load_dotenv_from(format_path)))
 
       // Act
       let value = config.get("MULTILINE")
@@ -360,25 +471,20 @@ pub fn tests() -> TestSuite {
       |> be_equal(Ok("first line\nsecond line"))
       |> or_fail_with("MULTILINE should be Ok('first line\nsecond line')")
     }),
-    it("pitfall: a byte order mark hides the first name", fn() {
+    it("format: a byte order mark at the start is skipped", fn() {
       // Arrange
       use _ <- result.try(
-        file.write(
-          byte_order_mark_path,
-          "\u{FEFF}DATABASE_URL=postgres://localhost/app\n",
-        )
-        |> result.map_error(file.error_to_string),
+        described(config.load_dotenv_from(byte_order_mark_path)),
       )
-      use _ <- result.try(config.load_dotenv_from(byte_order_mark_path))
 
       // Act
-      let url = config.get("DATABASE_URL")
+      let result = config.get("DREAM_CONFIG_TEST_VALUE")
 
       // Assert
-      url
+      result
       |> should
-      |> be_equal(Error(Nil))
-      |> or_fail_with("The mark becomes part of the first name today")
+      |> be_equal(Ok("after the mark"))
+      |> or_fail_with("The first name should not hold the mark")
     }),
   ])
 }
@@ -388,4 +494,8 @@ fn copy_file(from: String, to: String) -> Result(Nil, String) {
     file.read(from) |> result.map_error(file.error_to_string),
   )
   file.write(to, text) |> result.map_error(file.error_to_string)
+}
+
+fn described(loaded: Result(Nil, config.LoadError)) -> Result(Nil, String) {
+  loaded |> result.map_error(config.describe_load_error)
 }

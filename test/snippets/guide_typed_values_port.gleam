@@ -1,12 +1,12 @@
-//// Guide: Optional settings, numbers and flags, step 2
+//// Guide: Read optional settings, numbers and flags, step 1
 ////
-//// Reads an optional port that must be a number when it is set.
+//// Uses a default only when PORT is not set. Every other error stops.
 
-import dream_config/loader as config
+import dream_config/loader.{type ConfigError, NotSet} as config
 
-pub fn port() -> Result(Int, String) {
-  case config.get("PORT") {
-    Error(Nil) -> Ok(3000)
-    Ok(_) -> config.get_required_int("PORT")
+pub fn port() -> Result(Int, ConfigError) {
+  case config.get_int("PORT") {
+    Error(NotSet(_)) -> Ok(3000)
+    other -> other
   }
 }

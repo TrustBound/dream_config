@@ -33,6 +33,23 @@ pub fn tests() -> TestSuite {
       |> be_equal(Ok("postgres://localhost/test"))
       |> or_fail_with("Expected the value from the .env file")
     }),
+    it("keeps a DATABASE_URL that is already set", fn() {
+      // Arrange
+      envoy.set("DATABASE_URL", "postgres://ci-database/test")
+      use _ <- result.try(
+        file.write(".env", "DATABASE_URL=postgres://localhost/test\n")
+        |> result.map_error(file.error_to_string),
+      )
+
+      // Act
+      let url = database_url_at_startup()
+
+      // Assert
+      url
+      |> should
+      |> be_equal(Ok("postgres://ci-database/test"))
+      |> or_fail_with("Expected the value from the environment")
+    }),
     it("stops at a line that is not valid", fn() {
       // Arrange
       use _ <- result.try(
