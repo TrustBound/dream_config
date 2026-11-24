@@ -42,7 +42,7 @@ gleam add dream_config
 
 Read your settings into a record. Each error names the variable:
 
-### Read the settings into a record <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a> <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/docs/guides/getting-started.md#read-the-settings-into-a-record-"><img align="right" alt="Guide" src="https://img.shields.io/badge/%F0%9F%93%96_read-guide-blue.svg?style=flat-square"></a>
+### Read the settings into a record <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/readme_quick_start.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a> <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/docs/guides/getting-started.md#read-the-settings-into-a-record-"><img align="right" alt="Guide: Load your app's settings at startup" title="Guide: Load your app's settings at startup" src="https://img.shields.io/badge/%F0%9F%93%96_read-guide-blue.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader.{type ConfigError} as config
@@ -67,7 +67,7 @@ pub fn load_settings() -> Result(Settings, ConfigError) {
 
 Then load the `.env` file and the settings one time at startup, and stop with the reason when one is missing or wrong:
 
-### Start the app or stop with the reason <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/guide_getting_started_main.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a> <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/docs/guides/getting-started.md#start-the-app-or-stop-with-the-reason-"><img align="right" alt="Guide" src="https://img.shields.io/badge/%F0%9F%93%96_read-guide-blue.svg?style=flat-square"></a>
+### Start the app or stop with the reason <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/test/snippets/guide_getting_started_main.gleam"><img align="right" alt="Tested snippet" src="https://img.shields.io/badge/%F0%9F%A7%AA_tested-snippet-lightgreen.svg?style=flat-square"></a> <a href="https://github.com/TrustBound/dream_config/blob/2.0.0/docs/guides/getting-started.md#start-the-app-or-stop-with-the-reason-"><img align="right" alt="Guide: Load your app's settings at startup" title="Guide: Load your app's settings at startup" src="https://img.shields.io/badge/%F0%9F%93%96_read-guide-blue.svg?style=flat-square"></a>
 
 ```gleam
 import dream_config/loader as config
