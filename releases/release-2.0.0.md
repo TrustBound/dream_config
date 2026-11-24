@@ -1,6 +1,6 @@
 # dream_config 2.0.0 Release Notes
 
-**Release Date:** not released yet (draft)
+**Release Date:** 2026-11-24
 
 This release makes `dream_config` safe by default. The values that the platform sets win over a `.env` file. Every read function returns one typed error, so a typo in an optional number no longer falls back to the default, and an empty required value is an error. A bad `.env` file is a typed error with the path and the line number.
 
