@@ -1,0 +1,14 @@
+# Gleam build artifacts
+build/
+
+# Erlang crash dumps
+erl_crash.dump
+*.dump
+
+# Local environment files
+.env
+
+# Editor files
+.vscode/
+.idea/
+.DS_Store

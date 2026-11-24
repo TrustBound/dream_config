@@ -1,14 +1,15 @@
-//// README: Loading .env Files
+//// Guide: Use a .env file in development
 ////
-//// Loads the .env file in the current directory, then a second file.
+//// Loads a secrets file from a path, then the .env file in the current
+//// directory.
 
-import dream_config/loader as config
+import dream_config/loader.{type LoadError} as config
 import gleam/result
 
-pub fn load_env_files(env_file_path: String) -> Result(Nil, String) {
-  // Load from default location (current directory)
-  use _ <- result.try(config.load_dotenv())
+pub fn load_env_files(secrets_path: String) -> Result(Nil, LoadError) {
+  // The first value for a name wins, so load the most important file first
+  use _ <- result.try(config.load_dotenv_from(secrets_path))
 
-  // Load from specific path, for example "/etc/myapp/.env"
-  config.load_dotenv_from(env_file_path)
+  // Then the local .env file, for the names that are still not set
+  config.load_dotenv()
 }

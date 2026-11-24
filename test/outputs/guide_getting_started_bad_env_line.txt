@@ -1,0 +1,1 @@
+Cannot start: Cannot load .env file at .env: line 1: expected NAME=VALUE

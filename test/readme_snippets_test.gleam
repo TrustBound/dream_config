@@ -1,216 +1,183 @@
-//// Tests for the code blocks in this module's README.md.
+//// Tests for the snippets of the README (and of the getting started guide,
+//// which shows the same snippets).
 ////
-//// Each test sets the environment variables it needs and unsets them at the
-//// end.
+//// Each test sets the environment variables it needs. `after_each` unsets
+//// every variable that a test can set.
 
+import dream_test/matchers.{be_equal, or_fail_with, should}
+import dream_test/suite.{type TestSuite}
+import dream_test/unit.{after_each, describe, group, it}
 import envoy
-import gleam/option
-import gleeunit/should
+import fixtures/output_file
+import gleam/result
 import snippets/readme_boolean_values
-import snippets/readme_load_env_files
-import snippets/readme_optional_values
-import snippets/readme_quick_start.{Settings}
-import snippets/readme_required_values.{AppConfig}
+import snippets/readme_quick_start
+import snippets/readme_required_values
 
-pub fn quick_start_reads_required_and_optional_values_test() {
-  // Arrange
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.set("PORT", "8080")
-  envoy.set("DEBUG", "true")
-  envoy.unset("API_KEY")
+pub fn tests() -> TestSuite {
+  describe("README snippets", [
+    after_each(fn() {
+      envoy.unset("DATABASE_URL")
+      envoy.unset("PORT")
+      envoy.unset("DEBUG")
+      envoy.unset("API_KEY")
+      Ok(Nil)
+    }),
+    group("readme_quick_start.load_settings", [
+      it("reads the required and optional values", fn() {
+        // Arrange
+        envoy.set("DATABASE_URL", "postgres://localhost/app")
+        envoy.set("PORT", "8080")
+        envoy.set("DEBUG", "true")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_2_loaded",
+        ))
 
-  // Act
-  let result = readme_quick_start.load_settings()
-  envoy.unset("DATABASE_URL")
-  envoy.unset("PORT")
-  envoy.unset("DEBUG")
+        // Act
+        let result = readme_quick_start.load_settings()
 
-  // Assert
-  result
-  |> should.equal(
-    Ok(Settings(
-      database_url: "postgres://localhost/app",
-      port: 8080,
-      debug_mode: True,
-      api_key: "default-key",
-    )),
-  )
-}
+        // Assert
+        output_file.inspected(result)
+        |> should
+        |> be_equal(shown)
+        |> or_fail_with("load_settings should read every value")
+      }),
+      it("returns NotSet when PORT is not set", fn() {
+        // Arrange
+        envoy.set("DATABASE_URL", "postgres://localhost/app")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_2_port_not_set",
+        ))
 
-pub fn quick_start_fails_when_port_is_not_set_test() {
-  // Arrange
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.unset("PORT")
+        // Act
+        let result = readme_quick_start.load_settings()
 
-  // Act
-  let result = readme_quick_start.load_settings()
-  envoy.unset("DATABASE_URL")
+        // Assert
+        output_file.inspected(result)
+        |> should
+        |> be_equal(shown)
+        |> or_fail_with("load_settings should name PORT")
+      }),
+    ]),
+    group("readme_required_values.load_config", [
+      it("reads DATABASE_URL and PORT", fn() {
+        // Arrange
+        envoy.set("DATABASE_URL", "postgres://localhost/app")
+        envoy.set("PORT", "8080")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_loaded",
+        ))
 
-  // Assert
-  result
-  |> should.equal(Error("Required environment variable not set: PORT"))
-}
+        // Act
+        let result = readme_required_values.load_config()
 
-pub fn load_env_files_sets_the_variables_from_the_file_test() {
-  // Arrange
-  envoy.unset("DREAM_CONFIG_SNIPPET_GREETING")
+        // Assert
+        output_file.inspected(result)
+        |> should
+        |> be_equal(shown)
+        |> or_fail_with("load_config should read both values")
+      }),
+      it("returns NotSet when DATABASE_URL is not set", fn() {
+        // Arrange
+        envoy.set("PORT", "8080")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_not_set",
+        ))
 
-  // Act
-  let _loaded = readme_load_env_files.load_env_files("test/fixtures/myapp.env")
-  let greeting = envoy.get("DREAM_CONFIG_SNIPPET_GREETING")
-  envoy.unset("DREAM_CONFIG_SNIPPET_GREETING")
+        // Act
+        let result = readme_required_values.load_config()
 
-  // Assert
-  greeting |> should.equal(Ok("hello from myapp.env"))
-}
+        // Assert
+        output_file.inspected(result)
+        |> should
+        |> be_equal(shown)
+        |> or_fail_with("load_config should name DATABASE_URL")
+      }),
+      it("returns Empty when DATABASE_URL is empty", fn() {
+        // Arrange
+        envoy.set("DATABASE_URL", "")
+        envoy.set("PORT", "8080")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_empty",
+        ))
 
-pub fn load_env_files_returns_ok_test() {
-  // Act
-  let result = readme_load_env_files.load_env_files("test/fixtures/myapp.env")
-  envoy.unset("DREAM_CONFIG_SNIPPET_GREETING")
+        // Act
+        let result = readme_required_values.load_config()
 
-  // Assert
-  result |> should.equal(Ok(Nil))
-}
+        // Assert
+        output_file.inspected(result)
+        |> should
+        |> be_equal(shown)
+        |> or_fail_with("load_config should reject an empty DATABASE_URL")
+      }),
+      it("returns NotAnInteger when PORT is not an integer", fn() {
+        // Arrange
+        envoy.set("DATABASE_URL", "postgres://localhost/app")
+        envoy.set("PORT", "eighty")
+        use shown <- result.try(output_file.read(
+          "guide_getting_started_step_1_not_an_integer",
+        ))
 
-pub fn load_config_reads_database_url_and_port_test() {
-  // Arrange
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.set("PORT", "8080")
+        // Act
+        let result = readme_required_values.load_config()
 
-  // Act
-  let result = readme_required_values.load_config()
-  envoy.unset("DATABASE_URL")
-  envoy.unset("PORT")
+        // Assert
+        output_file.inspected(result)
+        |> should
+        |> be_equal(shown)
+        |> or_fail_with("load_config should reject eighty")
+      }),
+    ]),
+    group("readme_boolean_values.log_level", [
+      it("returns debug when DEBUG is yes", fn() {
+        // Arrange
+        envoy.set("DEBUG", "yes")
 
-  // Assert
-  result
-  |> should.equal(
-    Ok(AppConfig(database_url: "postgres://localhost/app", port: 8080)),
-  )
-}
+        // Act
+        let result = readme_boolean_values.log_level()
 
-pub fn load_config_fails_when_database_url_is_not_set_test() {
-  // Arrange
-  envoy.unset("DATABASE_URL")
-  envoy.set("PORT", "8080")
+        // Assert
+        result
+        |> should
+        |> be_equal("debug")
+        |> or_fail_with("log_level should read yes as True")
+      }),
+      it("returns debug when DEBUG is tRUE", fn() {
+        // Arrange
+        envoy.set("DEBUG", "tRUE")
 
-  // Act
-  let result = readme_required_values.load_config()
-  envoy.unset("PORT")
+        // Act
+        let result = readme_boolean_values.log_level()
 
-  // Assert
-  result
-  |> should.equal(Error("Required environment variable not set: DATABASE_URL"))
-}
+        // Assert
+        result
+        |> should
+        |> be_equal("debug")
+        |> or_fail_with("log_level should read tRUE as True")
+      }),
+      it("returns info when DEBUG is false", fn() {
+        // Arrange
+        envoy.set("DEBUG", "false")
 
-pub fn load_config_fails_when_port_is_not_an_integer_test() {
-  // Arrange
-  envoy.set("DATABASE_URL", "postgres://localhost/app")
-  envoy.set("PORT", "eighty")
+        // Act
+        let result = readme_boolean_values.log_level()
 
-  // Act
-  let result = readme_required_values.load_config()
-  envoy.unset("DATABASE_URL")
-  envoy.unset("PORT")
+        // Assert
+        result
+        |> should
+        |> be_equal("info")
+        |> or_fail_with("log_level should read false as False")
+      }),
+      it("returns info when DEBUG is not set", fn() {
+        // Act
+        let result = readme_boolean_values.log_level()
 
-  // Assert
-  result |> should.equal(Error("Environment variable PORT must be an integer"))
-}
-
-pub fn read_optional_values_reads_set_values_test() {
-  // Arrange
-  envoy.set("API_KEY", "example-api-key")
-  envoy.set("PORT", "8080")
-
-  // Act
-  let result = readme_optional_values.read_optional_values()
-  envoy.unset("API_KEY")
-  envoy.unset("PORT")
-
-  // Assert
-  result |> should.equal(#(option.Some("example-api-key"), 8080))
-}
-
-pub fn read_optional_values_uses_defaults_when_not_set_test() {
-  // Arrange
-  envoy.unset("API_KEY")
-  envoy.unset("PORT")
-
-  // Act
-  let result = readme_optional_values.read_optional_values()
-
-  // Assert
-  result |> should.equal(#(option.None, 3000))
-}
-
-pub fn log_level_is_debug_when_debug_is_yes_test() {
-  // Arrange
-  envoy.set("DEBUG", "yes")
-
-  // Act
-  let result = readme_boolean_values.log_level()
-  envoy.unset("DEBUG")
-
-  // Assert
-  result |> should.equal("debug")
-}
-
-pub fn log_level_is_info_when_debug_is_not_set_test() {
-  // Arrange
-  envoy.unset("DEBUG")
-
-  // Act
-  let result = readme_boolean_values.log_level()
-
-  // Assert
-  result |> should.equal("info")
-}
-
-pub fn load_env_files_fails_when_the_file_does_not_exist_test() {
-  // Act
-  let result =
-    readme_load_env_files.load_env_files("test/fixtures/does_not_exist.env")
-
-  // Assert
-  result
-  |> should.equal(Error(
-    "Cannot load .env file at test/fixtures/does_not_exist.env: the file does not exist",
-  ))
-}
-
-pub fn load_env_files_fails_when_a_line_is_not_valid_test() {
-  // Act
-  let result =
-    readme_load_env_files.load_env_files("test/fixtures/missing_equals.env")
-
-  // Assert
-  result
-  |> should.equal(Error(
-    "Cannot load .env file at test/fixtures/missing_equals.env: line 2: expected NAME=VALUE",
-  ))
-}
-
-pub fn log_level_is_debug_when_debug_is_mixed_case_true_test() {
-  // Arrange
-  envoy.set("DEBUG", "tRUE")
-
-  // Act
-  let result = readme_boolean_values.log_level()
-  envoy.unset("DEBUG")
-
-  // Assert
-  result |> should.equal("debug")
-}
-
-pub fn log_level_is_info_when_debug_is_false_test() {
-  // Arrange
-  envoy.set("DEBUG", "false")
-
-  // Act
-  let result = readme_boolean_values.log_level()
-  envoy.unset("DEBUG")
-
-  // Assert
-  result |> should.equal("info")
+        // Assert
+        result
+        |> should
+        |> be_equal("info")
+        |> or_fail_with("log_level should read a missing DEBUG as False")
+      }),
+    ]),
+  ])
 }

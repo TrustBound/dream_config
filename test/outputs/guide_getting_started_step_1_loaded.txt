@@ -1,0 +1,1 @@
+Ok(AppConfig("postgres://localhost/app", 8080))
